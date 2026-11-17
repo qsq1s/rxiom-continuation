@@ -76,7 +76,7 @@ function PortfolioPage.new(openCoin: (ticker: string) -> ()): PortfolioPage
 	local title = Util.text({ Text = "Portfolio", Size = 28, Font = Fonts.Bold, Parent = frame })
 	title.Position = UDim2.fromOffset(0, 8)
 
-	-- Adres portfela Rantom obok tytułu.
+	-- Adres portfela Ghostbox obok tytułu.
 	local walletPill = create("Frame", {
 		Name = "WalletAddress",
 		Position = UDim2.fromOffset(150, 12),

@@ -459,6 +459,61 @@ function Icons.arrow(size: number, color: Color3, direction: "Left" | "Right", o
 	return frame
 end
 
+-- Duszek Ghostbox (portfel w grze): ręce w górę, jedno oko większe, uśmiech z różowym językiem.
+-- Własny rysunek z ramek, skaluje się do każdego rozmiaru. `body`: kolor duszka, `face`: oczy i usta.
+local GHOST_TONGUE = Color3.fromHex("FF5C8A")
+
+function Icons.ghost(size: number, body: Color3, face: Color3, order: number?): Frame
+	local frame = box("Ghostbox", size, order)
+	local function part(name: string, center: Vector2, extent: Vector2, color: Color3, z: number, parent: Instance?): Frame
+		return create("Frame", {
+			Name = name,
+			AnchorPoint = Vector2.new(0.5, 0.5),
+			Position = UDim2.fromScale(center.X, center.Y),
+			Size = UDim2.fromScale(extent.X, extent.Y),
+			BackgroundColor3 = color,
+			BorderSizePixel = 0,
+			ZIndex = z,
+			Parent = parent or frame,
+		}, { Util.round() })
+	end
+
+	for _, side in { -1, 1 } do
+		local arm = part("Arm", Vector2.new(0.5 + side * 0.31, 0.43), Vector2.new(0.17, 0.32), body, 1)
+		arm.Rotation = side * 35
+	end
+	part("Head", Vector2.new(0.5, 0.37), Vector2.new(0.6, 0.6), body, 2)
+	create("Frame", {
+		Name = "Body",
+		Position = UDim2.fromScale(0.2, 0.37),
+		Size = UDim2.fromScale(0.6, 0.45),
+		BackgroundColor3 = body,
+		BorderSizePixel = 0,
+		ZIndex = 2,
+		Parent = frame,
+	})
+	-- Falisty dół z trzech półkoli.
+	for _, x in { 0.3, 0.5, 0.7 } do
+		part("Hem", Vector2.new(x, 0.82), Vector2.new(0.2, 0.2), body, 2)
+	end
+
+	part("EyeLeft", Vector2.new(0.39, 0.36), Vector2.new(0.09, 0.09), face, 3)
+	part("EyeRight", Vector2.new(0.61, 0.35), Vector2.new(0.15, 0.15), face, 3)
+	-- Usta: dolna połowa elipsy, przycięta ramką.
+	local mouth = create("Frame", {
+		Name = "Mouth",
+		Position = UDim2.fromScale(0.35, 0.47),
+		Size = UDim2.fromScale(0.3, 0.1),
+		BackgroundTransparency = 1,
+		ClipsDescendants = true,
+		ZIndex = 3,
+		Parent = frame,
+	})
+	part("Smile", Vector2.new(0.5, 0), Vector2.new(1, 2), face, 1, mouth)
+	part("Tongue", Vector2.new(0.5, 0.6), Vector2.new(0.14, 0.17), GHOST_TONGUE, 4)
+	return frame
+end
+
 -- Kłódka przed adresem strony.
 function Icons.lock(size: number, color: Color3, order: number?): Frame
 	local frame = box("LockIcon", size, order)

@@ -17,7 +17,7 @@ export type Profile = {
 	-- Zlecenia z księgi; ich zarezerwowane RX/tokeny nie wchodzą do Balance/Positions.
 	Orders: { Types.BookOrder },
 	FaucetReadyAt: number,
-	-- Adres portfela Rantom (24 znaki base58), nadawany przy pierwszym logowaniu.
+	-- Adres portfela Ghostbox (24 znaki base58), nadawany przy pierwszym logowaniu.
 	Wallet: string?,
 }
 

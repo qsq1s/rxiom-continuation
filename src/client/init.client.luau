@@ -24,7 +24,7 @@ Market.start(initial)
 Portfolio.start(initial.Portfolio)
 
 local menu = MainMenu.mount()
--- Ekran logowania przykrywa terminal, dopóki gracz nie połączy portfela Rantom.
+-- Ekran logowania przykrywa terminal, dopóki gracz nie połączy portfela Ghostbox.
 Login.show(menu)
 
 Remotes.Notify.OnClientEvent:Connect(function(notice: Types.Notice)

@@ -1,5 +1,5 @@
 --!strict
--- Ekran logowania na rxiom.pro: "Login with Rantom" (portfel w stylu Phantoma), wybór konta Roblox
+-- Ekran logowania na rxiom.pro: "Login with Ghostbox" (portfel w stylu Phantoma), wybór konta Roblox
 -- w okienku portfela i nadanie adresu portfela (24 znaki). Czarno-biały, z animacjami.
 
 local Players = game:GetService("Players")
@@ -53,56 +53,6 @@ local function tween(
 		delay or 0
 	)
 	TweenService:Create(instance, info, props):Play()
-end
-
--- Duszek Rantom: główka + ciało, falisty dół wycięty kółkami w kolorze tła, dwoje oczu.
-local function ghost(size: number, color: Color3, background: Color3): Frame
-	local frame: Frame = create("Frame", {
-		Name = "RantomGhost",
-		BackgroundTransparency = 1,
-		Size = UDim2.fromOffset(size, size),
-	})
-	create("Frame", {
-		Name = "Head",
-		Position = UDim2.fromScale(0.14, 0.08),
-		Size = UDim2.fromScale(0.72, 0.62),
-		BackgroundColor3 = color,
-		BorderSizePixel = 0,
-		Parent = frame,
-	}, { Util.round() })
-	create("Frame", {
-		Name = "Body",
-		Position = UDim2.fromScale(0.14, 0.4),
-		Size = UDim2.fromScale(0.72, 0.48),
-		BackgroundColor3 = color,
-		BorderSizePixel = 0,
-		Parent = frame,
-	}, { Util.corner(math.max(1, math.floor(size * 0.06))) })
-	for _, x in { 0.38, 0.62 } do
-		create("Frame", {
-			Name = "Notch",
-			AnchorPoint = Vector2.new(0.5, 0.5),
-			Position = UDim2.fromScale(x, 0.88),
-			Size = UDim2.fromScale(0.16, 0.16),
-			BackgroundColor3 = background,
-			BorderSizePixel = 0,
-			ZIndex = 2,
-			Parent = frame,
-		}, { Util.round() })
-	end
-	for _, x in { 0.4, 0.6 } do
-		create("Frame", {
-			Name = "Eye",
-			AnchorPoint = Vector2.new(0.5, 0.5),
-			Position = UDim2.fromScale(x, 0.42),
-			Size = UDim2.fromScale(0.09, 0.17),
-			BackgroundColor3 = background,
-			BorderSizePixel = 0,
-			ZIndex = 2,
-			Parent = frame,
-		}, { Util.round() })
-	end
-	return frame
 end
 
 -- Kręcący się pierścień (łuk z gradientu na obrysie). Zwraca ramkę i funkcję zatrzymującą.
@@ -316,7 +266,7 @@ function Login.show(host: Host)
 	check.Parent = statusSlot
 	local caption = Util.text({ Text = " ", Size = 14, Color = Colors.TextMuted, Order = 3, Parent = fieldBlock })
 
-	-- Przycisk "Login with Rantom"
+	-- Przycisk "Login with Ghostbox"
 	local button: TextButton = create("TextButton", {
 		Name = "LoginButton",
 		AutoButtonColor = false,
@@ -333,11 +283,11 @@ function Login.show(host: Host)
 	buttonContent.Position = UDim2.fromScale(0.5, 0.5)
 	buttonContent.ZIndex = 3
 	buttonContent.Parent = button
-	local buttonGhost = ghost(24, Colors.OnPrimary, Colors.Primary)
+	local buttonGhost = Icons.ghost(28, Colors.OnPrimary, Colors.Primary)
 	buttonGhost.LayoutOrder = 1
 	buttonGhost.Parent = buttonContent
 	local buttonLabel = Util.text({
-		Text = "Login with Rantom",
+		Text = "Login with Ghostbox",
 		Size = 18,
 		Font = Fonts.Bold,
 		Color = Colors.OnPrimary,
@@ -361,14 +311,14 @@ function Login.show(host: Host)
 	local errorLabel = Util.text({ Text = "", Size = 14, Color = Colors.Red, Order = 6, Parent = card })
 	errorLabel.Visible = false
 	Util.text({
-		Text = "Secured by Rantom  ·  " .. Theme.Site,
+		Text = "Secured by Ghostbox  ·  " .. Theme.Site,
 		Size = 13,
 		Color = Colors.TextDim,
 		Order = 7,
 		Parent = card,
 	})
 
-	-- Okienko portfela Rantom
+	-- Okienko portfela Ghostbox
 	local backdrop: TextButton = create("TextButton", {
 		Name = "Backdrop",
 		AutoButtonColor = false,
@@ -381,7 +331,7 @@ function Login.show(host: Host)
 		Parent = screen,
 	})
 	local panel: CanvasGroup = create("CanvasGroup", {
-		Name = "RantomPopup",
+		Name = "GhostboxPopup",
 		AnchorPoint = Vector2.new(0.5, 0.5),
 		Position = UDim2.new(0.5, 0, 0.5, 30),
 		Size = UDim2.fromOffset(380, 0),
@@ -422,11 +372,11 @@ function Login.show(host: Host)
 		LayoutOrder = 1,
 		Parent = headerLeft,
 	}, { Util.corner(9) })
-	local tileGhost = ghost(22, Colors.Background, Colors.Text)
+	local tileGhost = Icons.ghost(26, Colors.Background, Colors.Text)
 	tileGhost.AnchorPoint = Vector2.new(0.5, 0.5)
 	tileGhost.Position = UDim2.fromScale(0.5, 0.5)
 	tileGhost.Parent = ghostTile
-	Util.text({ Text = "Rantom", Size = 19, Font = Fonts.Bold, Order = 2, Parent = headerLeft })
+	Util.text({ Text = "Ghostbox", Size = 19, Font = Fonts.Bold, Order = 2, Parent = headerLeft })
 	local closeButton: TextButton = create("TextButton", {
 		Name = "Close",
 		AutoButtonColor = false,
