@@ -19,11 +19,23 @@ Zapis postępu (DataStore) działa w opublikowanej grze. W Studio trzeba włącz
 - Prowizja 1% od transakcji plus wybrany priority fee i tip.
 - Serwer wykonuje wszystkie transakcje. Klient wysyła oczekiwany wynik, a serwer odrzuca transakcję, jeśli cena uciekła bardziej niż ustawiony slippage.
 - Boty symulują innych traderów, więc ceny, wolumen i wykresy żyją także przy jednym graczu. Przy starcie serwer symuluje ostatnią godzinę historii.
-- Zlecenia **Limit** wykonują się, gdy market cap dojdzie do celu. **Advanced Trading Strategy** dokłada do kupna take profit i stop loss.
+- Zlecenia **Limit** trafiają do księgi zleceń (order book) i czekają, aż zostaną wykonane albo anulowane. **Advanced Trading Strategy** dokłada do kupna take profit i stop loss.
 - **Deposit** daje darmowe RXI co 5 minut.
 - Przy wejściu gracz loguje się przez portfel **Rantom** (wybiera swoje konto Roblox). Przy pierwszym logowaniu dostaje stały adres portfela z 24 znaków, zapisywany w profilu.
 
 Ustawienia ekonomii są w `src/shared/Config.luau`, a lista coinów w `src/shared/Coins.luau`.
+
+## Księga zleceń (order book)
+
+Każdy coin ma na serwerze księgę zleceń z priorytetem ceny i czasu (`src/server/Services/OrderBook.luau`), połączoną z pulą płynności:
+
+- Każda transakcja rynkowa (gracze, boty, TP/SL) przechodzi przez księgę. Kupno bierze z puli tylko do ceny najlepszego asku, wykonuje ten ask po jego cenie i idzie dalej; sprzedaż analogicznie z bidami. Bidy leżą zawsze poniżej ceny puli, aski powyżej, a taker nigdy nie dostaje gorszej ceny niż z samej puli.
+- Zlecenie limit, które krzyżuje się z rynkiem, wykonuje się od razu jako taker (prowizja 1%) do swojej ceny. Reszta czeka w księdze i wykonuje się później jako maker, dokładnie po swojej cenie i bez prowizji.
+- Kupno rezerwuje wpisaną kwotę RXI (niewykorzystana część wraca po wykonaniu lub anulowaniu), sprzedaż blokuje tokeny.
+- Zlecenia są zapisywane w profilu gracza. Gdy gracz wychodzi, znikają z księgi tego serwera; po ponownym wejściu wracają (i od razu się wykonują, jeśli cena je przekroczyła).
+- Strona coina pokazuje księgę obok wykresu. Każdy poziom łączy płynność puli w danym przedziale cen ze zleceniami graczy: cena ($), ilość tokenów, wartość (RXI) i pasek skumulowanej głębokości. Kliknięcie poziomu wpisuje jego cenę do zakładki Limit.
+
+Limity: 20 otwartych zleceń limit na gracza, cena najwyżej 100× od ceny rynkowej.
 
 ## Struktura
 

@@ -8,7 +8,13 @@ local Signal = require(ReplicatedStorage.Shared.Signal)
 local Types = require(ReplicatedStorage.Shared.Types)
 
 local Portfolio = {}
-Portfolio.State = { Balance = 0, Positions = {}, Orders = {}, FaucetReadyAt = 0 } :: Types.PortfolioState
+Portfolio.State = {
+	Balance = 0,
+	Positions = {},
+	Orders = {},
+	Triggers = {},
+	FaucetReadyAt = 0,
+} :: Types.PortfolioState
 Portfolio.Changed = Signal.new() -- ()
 
 local function apply(state: Types.PortfolioState)
@@ -27,7 +33,8 @@ function Portfolio.position(ticker: string): Types.Position?
 	return Portfolio.State.Positions[ticker]
 end
 
-function Portfolio.orders(ticker: string?): { Types.LimitOrder }
+-- Zlecenia z księgi (limit), opcjonalnie tylko dla jednego coina.
+function Portfolio.orders(ticker: string?): { Types.BookOrder }
 	local result = {}
 	for _, order in Portfolio.State.Orders do
 		if ticker == nil or order.Ticker == ticker then
@@ -37,10 +44,26 @@ function Portfolio.orders(ticker: string?): { Types.LimitOrder }
 	return result
 end
 
--- Tokeny gracza łącznie z tymi zablokowanymi w zleceniach sprzedaży.
+-- TP/SL, opcjonalnie tylko dla jednego coina.
+function Portfolio.triggers(ticker: string?): { Types.TriggerOrder }
+	local result = {}
+	for _, order in Portfolio.State.Triggers do
+		if ticker == nil or order.Ticker == ticker then
+			table.insert(result, order)
+		end
+	end
+	return result
+end
+
+-- Tokeny gracza łącznie z tymi zablokowanymi w zleceniach sprzedaży i TP/SL.
 function Portfolio.totalTokens(ticker: string): number
 	local p = Portfolio.State.Positions[ticker]
 	local total = if p then p.Tokens else 0
+	for _, order in Portfolio.State.Triggers do
+		if order.Ticker == ticker then
+			total += order.Tokens
+		end
+	end
 	for _, order in Portfolio.State.Orders do
 		if order.Ticker == ticker and order.Side == "Sell" then
 			total += order.Tokens

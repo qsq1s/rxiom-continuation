@@ -8,6 +8,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Amm = require(ReplicatedStorage.Shared.Amm)
 local Config = require(ReplicatedStorage.Shared.Config)
 local Market = require(script.Parent.Market)
+local OrderBook = require(script.Parent.OrderBook)
 
 local BASE58 = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
 
@@ -37,10 +38,10 @@ local function trade(ticker: string, state: Market.CoinState, s: number, t: numb
 	local size = pool.Rx * (0.0006 + rng:NextNumber() ^ 3 * 0.015) * calm
 
 	if rng:NextNumber() < buyChance then
-		Market.executeBuy(ticker, size, walletName(), false, t)
+		OrderBook.buy(ticker, size, walletName(), false, t)
 	else
 		local tokens = pool.Tokens * size / (pool.Rx - size)
-		Market.executeSell(ticker, tokens, walletName(), false, t)
+		OrderBook.sell(ticker, tokens, walletName(), false, t)
 	end
 end
 

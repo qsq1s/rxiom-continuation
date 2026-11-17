@@ -21,6 +21,7 @@ local Chart = require(UI.Chart)
 local Icons = require(UI.Icons)
 local Theme = require(UI.Theme)
 local Util = require(UI.Util)
+local OrderBookView = require(script.Parent.OrderBookView)
 local TradePanel = require(script.Parent.TradePanel)
 
 local create = Util.create
@@ -29,6 +30,7 @@ local Fonts = Theme.Fonts
 
 local HEADER_HEIGHT = 80
 local PANEL_WIDTH = 390
+local BOOK_WIDTH = 320
 local GAP = 16
 
 export type CoinView = {
@@ -170,7 +172,7 @@ function CoinView.new(onBack: () -> ()): CoinView
 		Name = "Left",
 		BackgroundTransparency = 1,
 		Position = UDim2.fromOffset(0, HEADER_HEIGHT + GAP),
-		Size = UDim2.new(1, -(PANEL_WIDTH + GAP), 1, -(HEADER_HEIGHT + GAP)),
+		Size = UDim2.new(1, -(PANEL_WIDTH + BOOK_WIDTH + 2 * GAP), 1, -(HEADER_HEIGHT + GAP)),
 		Parent = frame,
 	})
 	local chart = Chart.new(Config.CandleHistory)
@@ -225,6 +227,13 @@ function CoinView.new(onBack: () -> ()): CoinView
 	local panel = TradePanel.new()
 	panel.Frame.LayoutOrder = 1
 	panel.Frame.Parent = right
+
+	-- Środkowa kolumna: księga zleceń; kliknięcie poziomu ustawia cenę zlecenia limit.
+	local book = OrderBookView.new(panel.SetLimitPrice)
+	book.Frame.AnchorPoint = Vector2.new(1, 0)
+	book.Frame.Position = UDim2.new(1, -(PANEL_WIDTH + GAP), 0, HEADER_HEIGHT + GAP)
+	book.Frame.Size = UDim2.new(0, BOOK_WIDTH, 1, -(HEADER_HEIGHT + GAP))
+	book.Frame.Parent = frame
 
 	local positionCard = card("Position", 2)
 	positionCard.Parent = right
@@ -379,19 +388,65 @@ function CoinView.new(onBack: () -> ()): CoinView
 		pnlStat.Sub.Text = if bought > 0 then Format.percent(pnl / bought * 100) else Config.Currency
 	end
 
-	local function describeOrder(order: Types.LimitOrder): (string, string)
-		local title = if order.Side == "Buy"
-			then `Buy {Format.rx(order.Rx)}`
-			else `Sell {Format.compact(order.Tokens)} {order.Ticker}`
-		local condition
-		if order.Above and order.Below then
-			condition = `TP {Format.usd(order.Above)}  ·  SL {Format.usd(order.Below)}`
-		elseif order.Above then
-			condition = `when MC rises to {Format.usd(order.Above)}`
-		else
-			condition = `when MC falls to {Format.usd(order.Below or 0)}`
-		end
-		return title, condition
+	local function describeTrigger(order: Types.TriggerOrder): (string, string)
+		return `Sell {Format.compact(order.Tokens)} {order.Ticker}`,
+			`TP {Format.usd(order.Above)}  ·  SL {Format.usd(order.Below)}`
+	end
+
+	local function describeLimit(order: Types.BookOrder): (string, string)
+		local at = "$" .. Format.decimal(order.Price * Config.UsdPerRx)
+		local total = order.Tokens + order.Filled
+		local title = `{order.Side} {Format.compact(total)} {order.Ticker} @ {at}`
+		local filled = if total > 0 then order.Filled / total * 100 else 0
+		local detail = if order.Side == "Buy"
+			then `Limit  ·  {string.format("%.0f", filled)}% filled  ·  {Format.rx(order.Reserved)} reserved`
+			else `Limit  ·  {string.format("%.0f", filled)}% filled  ·  {Format.compact(order.Tokens)} left`
+		return title, detail
+	end
+
+	local function orderRow(order: number, side: Types.Side, title: string, detail: string, id: string | number)
+		local row = create("Frame", {
+			Name = "Order" .. order,
+			BackgroundColor3 = Colors.Background,
+			Size = UDim2.new(1, 0, 0, 48),
+			LayoutOrder = order,
+			Parent = ordersList,
+		}, { Util.corner(6), Util.padding(0, 12) })
+		Util.label({
+			Text = title,
+			Size = 14,
+			Font = Fonts.SemiBold,
+			Color = if side == "Buy" then Colors.Green else Colors.Red,
+			Position = UDim2.fromOffset(0, 6),
+			FrameSize = UDim2.new(1, -36, 0, 18),
+			Parent = row,
+		})
+		Util.label({
+			Text = detail,
+			Size = 13,
+			Color = Colors.TextMuted,
+			Position = UDim2.fromOffset(0, 25),
+			FrameSize = UDim2.new(1, -36, 0, 16),
+			Parent = row,
+		})
+		local cancel: TextButton = create("TextButton", {
+			Name = "Cancel",
+			AutoButtonColor = false,
+			AnchorPoint = Vector2.new(1, 0.5),
+			Position = UDim2.fromScale(1, 0.5),
+			Size = UDim2.fromOffset(28, 28),
+			BackgroundColor3 = Colors.Elevated,
+			Text = "",
+			Parent = row,
+		}, { Util.round() })
+		local x = Icons.close(12, Colors.TextMuted)
+		x.AnchorPoint = Vector2.new(0.5, 0.5)
+		x.Position = UDim2.fromScale(0.5, 0.5)
+		x.Parent = cancel
+		Util.hoverBackground(cancel, Colors.Elevated, Colors.Border)
+		cancel.Activated:Connect(function()
+			Actions.cancelOrder(id)
+		end)
 	end
 
 	local function refreshOrders()
@@ -400,53 +455,18 @@ function CoinView.new(onBack: () -> ()): CoinView
 				child:Destroy()
 			end
 		end
-		local list: { Types.LimitOrder } = if ticker then Portfolio.orders(ticker) else {}
-		ordersCard.Visible = #list > 0
-		ordersTitle.Text = `Open orders ({#list})`
-		for i, order in list do
-			local title, condition = describeOrder(order)
-			local row = create("Frame", {
-				Name = "Order" .. order.Id,
-				BackgroundColor3 = Colors.Background,
-				Size = UDim2.new(1, 0, 0, 48),
-				LayoutOrder = i,
-				Parent = ordersList,
-			}, { Util.corner(6), Util.padding(0, 12) })
-			Util.label({
-				Text = title,
-				Size = 14,
-				Font = Fonts.SemiBold,
-				Color = if order.Side == "Buy" then Colors.Green else Colors.Red,
-				Position = UDim2.fromOffset(0, 6),
-				FrameSize = UDim2.new(1, -36, 0, 18),
-				Parent = row,
-			})
-			Util.label({
-				Text = condition,
-				Size = 13,
-				Color = Colors.TextMuted,
-				Position = UDim2.fromOffset(0, 25),
-				FrameSize = UDim2.new(1, -36, 0, 16),
-				Parent = row,
-			})
-			local cancel: TextButton = create("TextButton", {
-				Name = "Cancel",
-				AutoButtonColor = false,
-				AnchorPoint = Vector2.new(1, 0.5),
-				Position = UDim2.fromScale(1, 0.5),
-				Size = UDim2.fromOffset(28, 28),
-				BackgroundColor3 = Colors.Elevated,
-				Text = "",
-				Parent = row,
-			}, { Util.round() })
-			local x = Icons.close(12, Colors.TextMuted)
-			x.AnchorPoint = Vector2.new(0.5, 0.5)
-			x.Position = UDim2.fromScale(0.5, 0.5)
-			x.Parent = cancel
-			Util.hoverBackground(cancel, Colors.Elevated, Colors.Border)
-			cancel.Activated:Connect(function()
-				Actions.cancelOrder(order.Id)
-			end)
+		local limits: { Types.BookOrder } = if ticker then Portfolio.orders(ticker) else {}
+		local brackets: { Types.TriggerOrder } = if ticker then Portfolio.triggers(ticker) else {}
+		local count = #limits + #brackets
+		ordersCard.Visible = count > 0
+		ordersTitle.Text = `Open orders ({count})`
+		for i, order in limits do
+			local title, detail = describeLimit(order)
+			orderRow(i, order.Side, title, detail, order.Id)
+		end
+		for i, order in brackets do
+			local title, detail = describeTrigger(order)
+			orderRow(#limits + i, "Sell", title, detail, order.Id)
 		end
 	end
 
@@ -455,6 +475,7 @@ function CoinView.new(onBack: () -> ()): CoinView
 			refreshHeader()
 			refreshTrades()
 			refreshPosition()
+			book.Refresh()
 		end
 	end)
 	Market.CandlesChanged:Connect(function(changed: string)
@@ -466,6 +487,9 @@ function CoinView.new(onBack: () -> ()): CoinView
 		refreshPosition()
 		refreshOrders()
 		refreshChartPosition()
+		if frame.Visible then
+			book.Refresh()
+		end
 	end)
 	Settings.Changed:Connect(function(key: string)
 		if key == "Timeframe" then
@@ -491,6 +515,7 @@ function CoinView.new(onBack: () -> ()): CoinView
 			end
 			Icons.token(def.Color, def.Ticker, 48).Parent = iconSlot
 			panel.SetCoin(newTicker)
+			book.SetCoin(newTicker)
 			refreshHeader()
 			refreshChartPosition()
 			refreshChart()

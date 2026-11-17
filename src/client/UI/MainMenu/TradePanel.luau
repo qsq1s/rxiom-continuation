@@ -35,9 +35,13 @@ local INPUT_BG = Color3.fromHex("101010")
 export type TradePanel = {
 	Frame: Frame,
 	SetCoin: (ticker: string) -> (),
+	-- Przełącza na zakładkę Limit z podaną ceną w $ (np. po kliknięciu poziomu w księdze).
+	SetLimitPrice: (usd: number) -> (),
 }
 
 local TradePanel = {}
+
+local FEE = Config.FeeBps / 10_000
 
 local function textBox(props: { [string]: any }): TextBox
 	local defaults = {
@@ -357,9 +361,9 @@ function TradePanel.new(): TradePanel
 	pencil.Position = UDim2.fromScale(0.5, 0.5)
 	pencil.Parent = editButton
 
-	-- 4. Market cap wyzwalający zlecenie (tylko Limit)
+	-- 4. Cena zlecenia limit w $ (tylko Limit)
 	local triggerBox = create("Frame", {
-		Name = "Trigger",
+		Name = "LimitPrice",
 		Size = UDim2.new(1, 0, 0, 52),
 		BackgroundColor3 = INPUT_BG,
 		LayoutOrder = 3,
@@ -367,17 +371,17 @@ function TradePanel.new(): TradePanel
 		Parent = body,
 	}, { Util.corner(8), Util.stroke(Colors.Border), Util.padding(0, 14) })
 	Util.label({
-		Text = "MC  $",
+		Text = "Price  $",
 		Size = 16,
 		Color = Colors.TextMuted,
-		FrameSize = UDim2.new(0, 60, 1, 0),
+		FrameSize = UDim2.new(0, 70, 1, 0),
 		Parent = triggerBox,
 	})
 	local triggerInput = textBox({
 		Name = "Value",
-		Position = UDim2.fromOffset(60, 0),
-		Size = UDim2.new(1, -170, 1, 0),
-		PlaceholderText = "e.g. 50K",
+		Position = UDim2.fromOffset(70, 0),
+		Size = UDim2.new(1, -190, 1, 0),
+		PlaceholderText = "0.0",
 		Parent = triggerBox,
 	})
 	local triggerHint = Util.label({
@@ -387,7 +391,7 @@ function TradePanel.new(): TradePanel
 		AlignX = Enum.TextXAlignment.Right,
 		AnchorPoint = Vector2.new(1, 0),
 		Position = UDim2.fromScale(1, 0),
-		FrameSize = UDim2.new(0, 110, 1, 0),
+		FrameSize = UDim2.new(0, 120, 1, 0),
 		Parent = triggerBox,
 	})
 
@@ -539,6 +543,12 @@ function TradePanel.new(): TradePanel
 		return n
 	end
 
+	-- Cena limit w RX za token (pole przyjmuje $).
+	local function limitPrice(): number?
+		local usd = parseMarketCap(triggerInput.Text)
+		return if usd then usd / Config.UsdPerRx else nil
+	end
+
 	local function refreshQuote()
 		local coin = if ticker then Market.coin(ticker) else nil
 		local pool = if ticker then Market.pool(ticker) else nil
@@ -546,18 +556,32 @@ function TradePanel.new(): TradePanel
 			quoteLabel.Text = ""
 			return
 		end
-		triggerHint.Text = "now " .. Format.usd(coin.MarketCap)
 		local value = amount()
 		local s = Settings.State
 		local fees = s.PriorityFee + s.Tip
 
 		if tab == "Limit" then
-			local trigger = parseMarketCap(triggerInput.Text)
-			if not trigger then
-				quoteLabel.Text = "Order executes when market cap reaches your target"
+			triggerInput.PlaceholderText = Format.decimal(coin.Price * Config.UsdPerRx)
+			local price = limitPrice()
+			if not price then
+				triggerHint.Text = "now $" .. Format.decimal(coin.Price * Config.UsdPerRx)
+				quoteLabel.Text = "Set a price or click a level in the order book"
+				return
+			end
+			triggerHint.Text = "MC " .. Format.usd(Market.toMarketCap(price))
+			local at = "$" .. Format.decimal(price * Config.UsdPerRx)
+			local tokens = if side == "Buy"
+				then (value or 0) * (1 - FEE) / price
+				else Actions.sellTokens(ticker, value or 0)
+			-- Zlecenie po drugiej stronie ceny rynkowej wykona się od razu (przynajmniej częściowo).
+			local instant = if side == "Buy" then price >= coin.Price else price <= coin.Price
+			local suffix = if instant then "  ·  fills now" else ""
+			if not value or tokens <= 0 then
+				quoteLabel.Text = `{side} at {at}{suffix}`
+			elseif side == "Buy" then
+				quoteLabel.Text = `~ {Format.compact(tokens)} {ticker} at {at}{suffix}`
 			else
-				local direction = if trigger >= coin.MarketCap then "rises to" else "falls to"
-				quoteLabel.Text = `Executes when MC {direction} {Format.usd(trigger)}`
+				quoteLabel.Text = `{Format.compact(tokens)} {ticker} for ~ {Format.rx(tokens * price)}{suffix}`
 			end
 			return
 		end
@@ -658,11 +682,11 @@ function TradePanel.new(): TradePanel
 			)
 			return
 		end
-		local trigger: number? = nil
+		local price: number? = nil
 		if tab == "Limit" then
-			trigger = parseMarketCap(triggerInput.Text)
-			if not trigger then
-				Toast.show("Enter a target market cap, e.g. 50K", "Error")
+			price = limitPrice()
+			if not price then
+				Toast.show("Enter a limit price in $", "Error")
 				return
 			end
 		end
@@ -679,8 +703,8 @@ function TradePanel.new(): TradePanel
 		busy = true
 		refreshSubmit()
 		task.spawn(function()
-			if trigger then
-				Actions.placeLimit(current, side, value, trigger)
+			if price then
+				Actions.placeLimit(current, side, value, price)
 			elseif side == "Buy" then
 				Actions.buy(current, value, bracket)
 			else
@@ -718,7 +742,7 @@ function TradePanel.new(): TradePanel
 	end
 	helpButton.Activated:Connect(function()
 		Toast.show(
-			"Market: trade instantly at the current price. Limit: trade automatically when market cap hits your target.",
+			"Market: trade instantly at the current price. Limit: post an order on the book at your price; it stays until it fills or you cancel it.",
 			"Info"
 		)
 	end)
@@ -796,6 +820,11 @@ function TradePanel.new(): TradePanel
 				ticker = newTicker
 				triggerInput.Text = ""
 			end
+			refreshLayout()
+		end,
+		SetLimitPrice = function(usd: number)
+			tab = "Limit"
+			triggerInput.Text = Format.plain(usd, 6)
 			refreshLayout()
 		end,
 	}

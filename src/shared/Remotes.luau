@@ -25,6 +25,7 @@ return table.freeze({
 	GetCandles = func("GetCandles"), -- (ticker) -> { Candle }
 	SubmitTrade = func("SubmitTrade"), -- (TradeRequest) -> ActionResult
 	PlaceLimitOrder = func("PlaceLimitOrder"), -- (LimitRequest) -> ActionResult
+	-- id: string dla zlecenia z księgi, number dla TP/SL
 	CancelLimitOrder = func("CancelLimitOrder"), -- (id) -> ActionResult
 	ClaimFaucet = func("ClaimFaucet"), -- () -> ActionResult
 })

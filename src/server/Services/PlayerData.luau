@@ -14,6 +14,8 @@ local Types = require(ReplicatedStorage.Shared.Types)
 export type Profile = {
 	Balance: number,
 	Positions: { [string]: Types.Position },
+	-- Zlecenia z księgi; ich zarezerwowane RX/tokeny nie wchodzą do Balance/Positions.
+	Orders: { Types.BookOrder },
 	FaucetReadyAt: number,
 	-- Adres portfela Rantom (24 znaki base58), nadawany przy pierwszym logowaniu.
 	Wallet: string?,
@@ -56,7 +58,33 @@ local function finite(v: any): boolean
 end
 
 local function defaultProfile(): Profile
-	return { Balance = Config.StartingBalance, Positions = {}, FaucetReadyAt = 0 }
+	return { Balance = Config.StartingBalance, Positions = {}, Orders = {}, FaucetReadyAt = 0 }
+end
+
+local function sanitizeOrder(o: any): Types.BookOrder?
+	if
+		typeof(o) ~= "table"
+		or typeof(o.Id) ~= "string"
+		or #o.Id > 64
+		or typeof(o.Ticker) ~= "string"
+		or not Coins.ByTicker[o.Ticker]
+		or (o.Side ~= "Buy" and o.Side ~= "Sell")
+		or not finite(o.Price)
+		or o.Price <= 0
+		or not finite(o.Tokens)
+	then
+		return nil
+	end
+	return {
+		Id = o.Id,
+		Ticker = o.Ticker,
+		Side = o.Side,
+		Price = o.Price,
+		Tokens = math.max(0, o.Tokens),
+		Filled = if finite(o.Filled) then math.max(0, o.Filled) else 0,
+		Reserved = if o.Side == "Buy" and finite(o.Reserved) then math.max(0, o.Reserved) else 0,
+		CreatedAt = if finite(o.CreatedAt) then o.CreatedAt else 0,
+	}
 end
 
 local function sanitize(data: any): Profile
@@ -66,9 +94,26 @@ local function sanitize(data: any): Profile
 	local profile: Profile = {
 		Balance = math.max(0, data.Balance),
 		Positions = {},
+		Orders = {},
 		FaucetReadyAt = if finite(data.FaucetReadyAt) then data.FaucetReadyAt else 0,
 		Wallet = if isWallet(data.Wallet) then data.Wallet else nil,
 	}
+	local orderTickers: { [string]: boolean } = {}
+	if typeof(data.Orders) == "table" then
+		for _, o in data.Orders do
+			local order = sanitizeOrder(o)
+			if not order then
+				continue
+			end
+			if order.Tokens <= Config.DustTokens then
+				-- Zlecenie już wykonane: oddaj resztę rezerwy zamiast ją zgubić.
+				profile.Balance += order.Reserved
+			else
+				table.insert(profile.Orders, order)
+				orderTickers[order.Ticker] = true
+			end
+		end
+	end
 	if typeof(data.Positions) == "table" then
 		for ticker, p in data.Positions do
 			if
@@ -77,7 +122,8 @@ local function sanitize(data: any): Profile
 				and finite(p.Tokens)
 				and finite(p.BoughtRx)
 				and finite(p.SoldRx)
-				and p.Tokens > Config.DustTokens
+				-- Pozycja ze wszystkimi tokenami w zleceniu sprzedaży też zostaje (historia, PnL).
+				and (p.Tokens > Config.DustTokens or orderTickers[ticker])
 			then
 				local fills = {}
 				if typeof(p.Fills) == "table" then
@@ -146,6 +192,7 @@ local function save(player: Player)
 	local payload = {
 		Balance = profile.Balance,
 		Positions = profile.Positions,
+		Orders = profile.Orders,
 		FaucetReadyAt = profile.FaucetReadyAt,
 		Wallet = profile.Wallet,
 	}

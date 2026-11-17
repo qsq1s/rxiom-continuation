@@ -13,8 +13,15 @@ export type TimeframeStats = {
 -- Świeca: ceny w RX za token; T to początek okresu (czas serwera).
 export type Candle = { T: number, O: number, H: number, L: number, C: number }
 
+-- Poziom księgi zleceń graczy: cena (RX za token), suma pozostałych tokenów i liczba zleceń.
+export type BookLevel = { Price: number, Tokens: number, Orders: number }
+
+-- Bids malejąco, Asks rosnąco po cenie.
+export type BookDepth = { Bids: { BookLevel }, Asks: { BookLevel } }
+
 export type CoinSnapshot = {
 	Ticker: string,
+	Book: BookDepth,
 	Price: number,
 	PoolRx: number,
 	PoolTokens: number,
@@ -62,24 +69,36 @@ export type Position = {
 	Fills: { Fill },
 }
 
--- Zlecenie z warunkiem na market cap ($). Above/Below: wykonaj, gdy MC >= Above lub MC <= Below.
--- Środki są rezerwowane przy złożeniu: Rx + Fees dla kupna, Tokens dla sprzedaży.
-export type LimitOrder = {
+-- TP/SL po kupnie: sprzedaj Tokens, gdy MC ($) >= Above albo MC <= Below. Tokeny są zablokowane.
+export type TriggerOrder = {
 	Id: number,
 	Ticker: string,
-	Side: Side,
-	Rx: number,
 	Tokens: number,
 	Fees: number,
-	Above: number?,
-	Below: number?,
+	Above: number,
+	Below: number,
+	CreatedAt: number,
+}
+
+-- Zlecenie z limitem ceny w księdze. Price w RX za token, Tokens to pozostała ilość.
+-- Kupno rezerwuje RX (Reserved), sprzedaż blokuje tokeny. Zlecenie jest zapisywane w profilu
+-- i wisi w księdze, dopóki nie zostanie wykonane albo anulowane.
+export type BookOrder = {
+	Id: string,
+	Ticker: string,
+	Side: Side,
+	Price: number,
+	Tokens: number,
+	Filled: number,
+	Reserved: number,
 	CreatedAt: number,
 }
 
 export type PortfolioState = {
 	Balance: number,
 	Positions: { [string]: Position },
-	Orders: { LimitOrder },
+	Orders: { BookOrder },
+	Triggers: { TriggerOrder },
 	FaucetReadyAt: number,
 	Wallet: string?,
 }
@@ -104,13 +123,12 @@ export type TradeRequest = {
 	Bracket: { TakeProfit: number, StopLoss: number }?,
 }
 
+-- Zlecenie do księgi. Price w RX za token; Amount: RX przy kupnie, procent tokenów przy sprzedaży.
 export type LimitRequest = {
 	Ticker: string,
 	Side: Side,
+	Price: number,
 	Amount: number,
-	TriggerMc: number,
-	PriorityFee: number,
-	Tip: number,
 }
 
 export type ActionResult = {

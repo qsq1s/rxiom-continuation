@@ -257,7 +257,7 @@ function PortfolioPage.new(openCoin: (ticker: string) -> ()): PortfolioPage
 		pnlValue.Text = (if totalPnl > 0 then "+" else "") .. Format.rx(totalPnl)
 		pnlValue.TextColor3 = if math.abs(totalPnl) < 1e-9 then Colors.Text else Util.changeColor(totalPnl)
 		pnlSub.Text = Format.usd(totalPnl * Config.UsdPerRx)
-		ordersValue.Text = tostring(#state.Orders)
+		ordersValue.Text = tostring(#state.Orders + #state.Triggers)
 		ordersSub.Text = "limit, TP and SL"
 	end
 

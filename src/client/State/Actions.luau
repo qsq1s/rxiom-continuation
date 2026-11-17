@@ -94,26 +94,31 @@ function Actions.sell(ticker: string, percent: number): boolean
 	return result.Ok
 end
 
-function Actions.placeLimit(ticker: string, side: Types.Side, amount: number, triggerMc: number): boolean
-	local s = Settings.State
+-- Składa zlecenie w księdze. `price` w RX za token; `amount`: RX przy kupnie, procent przy sprzedaży.
+function Actions.placeLimit(ticker: string, side: Types.Side, amount: number, price: number): boolean
 	local request: Types.LimitRequest = {
 		Ticker = ticker,
 		Side = side,
+		Price = price,
 		Amount = amount,
-		TriggerMc = triggerMc,
-		PriorityFee = s.PriorityFee,
-		Tip = s.Tip,
 	}
 	local result = invoke(Remotes.PlaceLimitOrder, request)
 	if result.Ok then
-		Toast.show(`Limit {string.lower(side)} placed at {Format.usd(triggerMc)} MC`, "Success")
+		local at = "$" .. Format.decimal(price * Config.UsdPerRx)
+		local filled = result.Tokens or 0
+		local text = `Limit {string.lower(side)} placed at {at}`
+		if filled > 0 then
+			text ..= ` · {Format.compact(filled)} {ticker} filled instantly`
+		end
+		Toast.show(text, "Success")
 	else
 		Toast.show(result.Error or "Order failed", "Error")
 	end
 	return result.Ok
 end
 
-function Actions.cancelOrder(id: number)
+-- `id`: string dla zlecenia z księgi, number dla TP/SL.
+function Actions.cancelOrder(id: string | number)
 	local result = invoke(Remotes.CancelLimitOrder, id)
 	Toast.show(
 		if result.Ok then "Order cancelled" else result.Error or "Cancel failed",

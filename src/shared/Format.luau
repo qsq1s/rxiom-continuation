@@ -44,6 +44,20 @@ function Format.decimal(n: number): string
 	return s
 end
 
+-- Liczba bez notacji wykładniczej z `digits` cyframi znaczącymi; do pól tekstowych i małych cen.
+function Format.plain(n: number, digits: number): string
+	if n == 0 then
+		return "0"
+	end
+	local decimals = math.clamp(digits - 1 - math.floor(math.log10(math.abs(n))), 0, 16)
+	local s = string.format("%." .. decimals .. "f", n)
+	if string.find(s, "%.") then
+		s = string.gsub(s, "0+$", "")
+		s = string.gsub(s, "%.$", "")
+	end
+	return s
+end
+
 function Format.usd(n: number): string
 	if n < 0 then
 		return "-$" .. Format.compact(-n)

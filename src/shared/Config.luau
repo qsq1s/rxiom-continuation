@@ -16,7 +16,14 @@ local Config = {
 	MinTradeRx = 0.001,
 	-- Pozostałości tokenów poniżej tej ilości są traktowane jak zero.
 	DustTokens = 1e-6,
+	-- Limit TP/SL na gracza.
 	MaxOpenOrders = 10,
+	-- Limit zleceń w księdze (order book) na gracza.
+	MaxBookOrders = 20,
+	-- Cena zlecenia może odbiegać od ceny rynkowej najwyżej tyle razy w górę lub w dół.
+	BookPriceBand = 100,
+	-- Ile poziomów cenowych z każdej strony księgi trafia do snapshotu.
+	BookDepthLevels = 40,
 	-- Maksymalna liczba transakcji gracza w oknie 1 sekundy.
 	TradeRateLimit = 6,
 

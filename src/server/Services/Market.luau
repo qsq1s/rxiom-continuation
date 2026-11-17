@@ -34,6 +34,9 @@ local pendingTrades: { TradeEvent } = {}
 local holderCounter: (ticker: string) -> number = function(_ticker: string)
 	return 0
 end
+local bookProvider: (ticker: string) -> Types.BookDepth = function(_ticker: string)
+	return { Bids = {}, Asks = {} }
+end
 local recording = true
 
 function Market.now(): number
@@ -71,6 +74,10 @@ end
 
 function Market.setHolderCounter(fn: (ticker: string) -> number)
 	holderCounter = fn
+end
+
+function Market.setBookProvider(fn: (ticker: string) -> Types.BookDepth)
+	bookProvider = fn
 end
 
 -- Podczas rozgrzewki historia jest zapisywana, ale transakcje nie trafiają do broadcastu.
@@ -146,24 +153,23 @@ local function record(
 	end
 end
 
--- Kupno za `rx` RX (prowizja wliczona). Zwraca liczbę otrzymanych tokenów.
-function Market.executeBuy(ticker: string, rx: number, trader: string, isPlayer: boolean, t: number?): number
-	local state = states[ticker]
-	local time = t or Market.now()
-	bucketAt(state, time)
-	local tokens = Amm.applyBuy(state.Pool, rx)
-	record(state, "Buy", rx, tokens, trader, isPlayer, time)
-	return tokens
+-- Otwiera kubełek statystyk przed zmianą ceny, żeby zapamiętał cenę otwarcia.
+function Market.beginTrade(ticker: string, t: number)
+	bucketAt(states[ticker], t)
 end
 
--- Sprzedaż `tokens`. Zwraca RX po prowizji.
-function Market.executeSell(ticker: string, tokens: number, trader: string, isPlayer: boolean, t: number?): number
-	local state = states[ticker]
-	local time = t or Market.now()
-	bucketAt(state, time)
-	local rx = Amm.applySell(state.Pool, tokens)
-	record(state, "Sell", rx, tokens, trader, isPlayer, time)
-	return rx
+-- Zapisuje transakcję (wolumen, świeca, lista transakcji). Rx: brutto przy kupnie, netto przy sprzedaży.
+-- Samo wykonanie (pula + księga zleceń) odbywa się w OrderBook.
+function Market.recordTrade(
+	ticker: string,
+	side: Types.Side,
+	rx: number,
+	tokens: number,
+	trader: string,
+	isPlayer: boolean,
+	t: number
+)
+	record(states[ticker], side, rx, tokens, trader, isPlayer, t)
 end
 
 -- Domyka świece także wtedy, gdy przez dłuższy czas nikt nie handluje.
@@ -216,6 +222,7 @@ function Market.snapshot(): Types.MarketSnapshot
 		end
 		coins[ticker] = {
 			Ticker = ticker,
+			Book = bookProvider(ticker),
 			Price = price,
 			PoolRx = state.Pool.Rx,
 			PoolTokens = state.Pool.Tokens,

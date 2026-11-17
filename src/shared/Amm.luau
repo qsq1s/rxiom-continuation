@@ -52,6 +52,48 @@ function Amm.applySell(pool: Pool, tokensIn: number): number
 	return gross * (1 - FEE)
 end
 
+-- Poniższe funkcje działają na kwotach netto (bez prowizji); prowizję nalicza księga zleceń.
+
+-- Ile RX netto trzeba wpłacić, żeby cena krańcowa wzrosła do `price`.
+function Amm.rxToPrice(pool: Pool, price: number): number
+	return math.max(0, math.sqrt(pool.Rx * pool.Tokens * price) - pool.Rx)
+end
+
+-- Ile tokenów trzeba sprzedać, żeby cena krańcowa spadła do `price`.
+function Amm.tokensToPrice(pool: Pool, price: number): number
+	return math.max(0, math.sqrt(pool.Rx * pool.Tokens / price) - pool.Tokens)
+end
+
+-- Ile RX netto kosztuje dokładnie `tokens` tokenów z puli.
+function Amm.rxForTokens(pool: Pool, tokens: number): number
+	if tokens >= pool.Tokens then
+		return math.huge
+	end
+	return pool.Rx * tokens / (pool.Tokens - tokens)
+end
+
+-- Wymiana RX netto na tokeny; zwraca liczbę tokenów.
+function Amm.swapRx(pool: Pool, rxNet: number): number
+	local out = pool.Tokens * rxNet / (pool.Rx + rxNet)
+	pool.Rx += rxNet
+	pool.Tokens -= out
+	return out
+end
+
+-- Wymiana tokenów na RX; zwraca RX brutto (przed prowizją).
+function Amm.swapTokens(pool: Pool, tokens: number): number
+	local out = pool.Rx * tokens / (pool.Tokens + tokens)
+	pool.Tokens += tokens
+	pool.Rx -= out
+	return out
+end
+
+-- Płynność puli między cenami `lo` < `hi`: tokeny i ich wartość w RX (bez prowizji).
+function Amm.depth(pool: Pool, lo: number, hi: number): (number, number)
+	local k = pool.Rx * pool.Tokens
+	return math.sqrt(k / lo) - math.sqrt(k / hi), math.sqrt(k * hi) - math.sqrt(k * lo)
+end
+
 -- Zmiana ceny (w %) spowodowana transakcją; dodatnia dla kupna, ujemna dla sprzedaży.
 function Amm.priceImpact(pool: Pool, side: "Buy" | "Sell", amount: number): number
 	local copy = { Rx = pool.Rx, Tokens = pool.Tokens }
