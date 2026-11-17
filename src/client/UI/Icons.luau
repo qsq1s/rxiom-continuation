@@ -1,7 +1,6 @@
 --!strict
 -- Ikony: proste kształty rysowane z ramek oraz grafiki marki (logo RXIOM i moneta RXI).
 
-local Raster = require(script.Parent.Raster)
 local Theme = require(script.Parent.Theme)
 local Util = require(script.Parent.Util)
 
@@ -458,48 +457,6 @@ function Icons.arrow(size: number, color: Color3, direction: "Left" | "Right", o
 	capsule(frame, tip, Vector2.new(x(12), c - 8 * f), t, color)
 	capsule(frame, tip, Vector2.new(x(12), c + 8 * f), t, color)
 	return frame
-end
-
--- Ikona z pokrycia pikseli: pełne piksele łączone w poziome paski, brzegi jako pojedyncze piksele
--- z przezroczystością (wygładzenie). Wymaga pozycji w pełnych pikselach ekranu (bez UIScale).
-local function rasterIcon(name: string, size: number, color: Color3, shape: Raster.Shape, order: number?): Frame
-	size = math.floor(size)
-	local frame = box(name, size, order)
-	for y, row in Raster.coverage(size, shape) do
-		local x = 1
-		while x <= size do
-			local alpha = row[x]
-			if alpha >= 0.99 then
-				local first = x
-				while x < size and row[x + 1] >= 0.99 do
-					x += 1
-				end
-				create("Frame", {
-					Position = UDim2.fromOffset(first - 1, y - 1),
-					Size = UDim2.fromOffset(x - first + 1, 1),
-					BackgroundColor3 = color,
-					BorderSizePixel = 0,
-					Parent = frame,
-				})
-			elseif alpha > 0.04 then
-				create("Frame", {
-					Position = UDim2.fromOffset(x - 1, y - 1),
-					Size = UDim2.fromOffset(1, 1),
-					BackgroundColor3 = color,
-					BackgroundTransparency = 1 - alpha,
-					BorderSizePixel = 0,
-					Parent = frame,
-				})
-			end
-			x += 1
-		end
-	end
-	return frame
-end
-
--- Odśwież: dwie strzałki w kółku.
-function Icons.refresh(size: number, color: Color3, order: number?): Frame
-	return rasterIcon("RefreshIcon", size, color, Raster.sync, order)
 end
 
 -- Kłódka przed adresem strony.

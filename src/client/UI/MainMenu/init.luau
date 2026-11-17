@@ -181,12 +181,6 @@ function MainMenu.mount(): Handle
 				render(history[position])
 			end
 		end,
-		Refresh = function()
-			local page = history[position]
-			if page and not locked then
-				render(page)
-			end
-		end,
 	})
 	browser.Frame.Parent = gui
 

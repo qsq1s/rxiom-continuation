@@ -18,7 +18,6 @@ local TAB_WIDTH = 230
 export type Callbacks = {
 	Back: () -> (),
 	Forward: () -> (),
-	Refresh: () -> (),
 }
 
 export type Browser = {
@@ -164,15 +163,12 @@ function Browser.new(callbacks: Callbacks): Browser
 	local forwardIcon = Icons.arrow(20, Colors.Text, "Right")
 	center(forwardIcon, forwardButton)
 	forwardButton.Parent = nav
-	local refreshButton = toolButton("Refresh", 3)
-	center(Icons.refresh(20, Colors.Text), refreshButton)
-	refreshButton.Parent = nav
 
 	local address: Frame = create("Frame", {
 		Name = "Address",
 		AnchorPoint = Vector2.new(0, 0.5),
-		Position = UDim2.new(0, 104, 0.5, 0),
-		Size = UDim2.new(1, -112, 0, 28),
+		Position = UDim2.new(0, 72, 0.5, 0),
+		Size = UDim2.new(1, -80, 0, 28),
 		BackgroundColor3 = Colors.ChromeField,
 		Parent = toolbar,
 	}, { Util.round(), Util.padding(0, 16) })
@@ -197,7 +193,6 @@ function Browser.new(callbacks: Callbacks): Browser
 
 	backButton.Activated:Connect(callbacks.Back)
 	forwardButton.Activated:Connect(callbacks.Forward)
-	refreshButton.Activated:Connect(callbacks.Refresh)
 
 	local function setIconColor(icon: Frame, enabled: boolean)
 		for _, part in icon:GetChildren() do
@@ -227,8 +222,9 @@ function Browser.new(callbacks: Callbacks): Browser
 			stripPadding.PaddingLeft = UDim.new(0, contentLeft)
 			local toolbarLeft = if topbarHeight > STRIP_HEIGHT then contentLeft else 10
 			nav.Position = UDim2.new(0, toolbarLeft, 0.5, 0)
-			address.Position = UDim2.new(0, toolbarLeft + 94, 0.5, 0)
-			address.Size = UDim2.new(1, -(toolbarLeft + 102), 0, 28)
+			-- Dwa przyciski po 28 px z odstępem 4 px, potem 2 px przerwy przed polem adresu.
+			address.Position = UDim2.new(0, toolbarLeft + 62, 0.5, 0)
+			address.Size = UDim2.new(1, -(toolbarLeft + 70), 0, 28)
 			return STRIP_HEIGHT + TOOLBAR_HEIGHT
 		end,
 	}
