@@ -10,6 +10,7 @@ local Coins = require(ReplicatedStorage.Shared.Coins)
 local Config = require(ReplicatedStorage.Shared.Config)
 local Signal = require(ReplicatedStorage.Shared.Signal)
 local Types = require(ReplicatedStorage.Shared.Types)
+local Stats = require(script.Parent.Stats)
 
 export type Profile = {
 	Balance: number,
@@ -19,6 +20,9 @@ export type Profile = {
 	FaucetReadyAt: number,
 	-- Adres portfela Ghostbox (24 znaki base58), nadawany przy pierwszym logowaniu.
 	Wallet: string?,
+	-- Czy statystyki są widoczne w Wallet Trackerze. Domyślnie nie: gracz musi sam się zgodzić.
+	Public: boolean,
+	Stats: Types.TradeStats,
 }
 
 local WALLET_ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
@@ -58,7 +62,14 @@ local function finite(v: any): boolean
 end
 
 local function defaultProfile(): Profile
-	return { Balance = Config.StartingBalance, Positions = {}, Orders = {}, FaucetReadyAt = 0 }
+	return {
+		Balance = Config.StartingBalance,
+		Positions = {},
+		Orders = {},
+		FaucetReadyAt = 0,
+		Public = false,
+		Stats = Stats.empty(),
+	}
 end
 
 local function sanitizeOrder(o: any): Types.BookOrder?
@@ -97,6 +108,8 @@ local function sanitize(data: any): Profile
 		Orders = {},
 		FaucetReadyAt = if finite(data.FaucetReadyAt) then data.FaucetReadyAt else 0,
 		Wallet = if isWallet(data.Wallet) then data.Wallet else nil,
+		Public = data.Public == true,
+		Stats = Stats.empty(),
 	}
 	local orderTickers: { [string]: boolean } = {}
 	if typeof(data.Orders) == "table" then
@@ -154,6 +167,7 @@ local function sanitize(data: any): Profile
 			end
 		end
 	end
+	profile.Stats = Stats.sanitize(data.Stats, profile.Positions, profile.Orders)
 	return profile
 end
 
@@ -196,6 +210,8 @@ local function save(player: Player)
 		Orders = profile.Orders,
 		FaucetReadyAt = profile.FaucetReadyAt,
 		Wallet = profile.Wallet,
+		Public = profile.Public,
+		Stats = profile.Stats,
 	}
 	local ok, err = pcall(store.UpdateAsync, store, key(player), function()
 		return payload
@@ -208,6 +224,13 @@ end
 function PlayerData.get(player: Player): Profile?
 	return profiles[player]
 end
+
+-- Czy profil gracza jest zapisywany (tymczasowego profilu nie publikujemy w Wallet Trackerze).
+function PlayerData.canSave(player: Player): boolean
+	return saveable[player] == true and store ~= nil
+end
+
+PlayerData.isWallet = isWallet
 
 -- Czeka na wczytanie profilu (np. gdy gracz loguje się zaraz po wejściu).
 function PlayerData.waitFor(player: Player, timeout: number): Profile?

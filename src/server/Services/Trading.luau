@@ -15,6 +15,7 @@ local Launchpad = require(script.Parent.Launchpad)
 local Market = require(script.Parent.Market)
 local OrderBook = require(script.Parent.OrderBook)
 local PlayerData = require(script.Parent.PlayerData)
+local Tracker = require(script.Parent.Tracker)
 
 type Profile = PlayerData.Profile
 type TriggerOrder = Types.TriggerOrder
@@ -79,7 +80,40 @@ local function portfolio(player: Player): Types.PortfolioState?
 		Triggers = triggers[player] or {},
 		FaucetReadyAt = profile.FaucetReadyAt,
 		Wallet = profile.Wallet,
+		Public = profile.Public,
+		Alias = Tracker.alias(player),
 	}
+end
+
+-- Wartość portfela w RX: saldo, rezerwy zleceń kupna i wszystkie tokeny (także zablokowane w
+-- zleceniach sprzedaży i TP/SL) po bieżącej cenie.
+function Trading.portfolioValue(player: Player): number
+	local profile = PlayerData.get(player)
+	if not profile then
+		return 0
+	end
+	local value = profile.Balance
+	local tokens: { [string]: number } = {}
+	for ticker, p in profile.Positions do
+		tokens[ticker] = p.Tokens
+	end
+	for _, order in profile.Orders do
+		if order.Side == "Buy" then
+			value += order.Reserved
+		else
+			tokens[order.Ticker] = (tokens[order.Ticker] or 0) + order.Tokens
+		end
+	end
+	for _, order in triggers[player] or {} :: { TriggerOrder } do
+		tokens[order.Ticker] = (tokens[order.Ticker] or 0) + order.Tokens
+	end
+	for ticker, amount in tokens do
+		local state = Market.get(ticker)
+		if state then
+			value += amount * Amm.price(state.Pool)
+		end
+	end
+	return value
 end
 
 local function pushPortfolio(player: Player)
@@ -145,7 +179,7 @@ local function cleanup(player: Player, profile: Profile, ticker: string)
 end
 
 local function traderName(player: Player): string
-	return player.DisplayName
+	return Tracker.traderName(player)
 end
 
 local function usdPrice(price: number): string
@@ -188,7 +222,7 @@ end
 
 -- Rozlicza część zlecenia wykonaną po stronie gracza. `rx`: dla kupna zapłacone RX, dla sprzedaży
 -- otrzymane RX. `poolRx` to wartość bez prowizji (dla historii wejść).
-local function settle(profile: Profile, order: BookOrder, tokens: number, rx: number, poolRx: number)
+local function settle(player: Player, profile: Profile, order: BookOrder, tokens: number, rx: number, poolRx: number)
 	local p = position(profile, order.Ticker)
 	if order.Side == "Buy" then
 		p.Tokens += tokens
@@ -198,6 +232,7 @@ local function settle(profile: Profile, order: BookOrder, tokens: number, rx: nu
 		p.SoldRx += rx
 	end
 	recordFill(p, order.Side, poolRx, tokens)
+	Tracker.record(player, order.Ticker, order.Side, tokens, rx)
 end
 
 -- Wystawia zlecenie w księdze (nowe albo wczytane z profilu) i rozlicza część wykonaną od razu.
@@ -205,7 +240,7 @@ local function activate(player: Player, profile: Profile, order: BookOrder): (nu
 	local tokens, rx = OrderBook.place(player, order, traderName(player))
 	if tokens > 0 then
 		local poolRx = if order.Side == "Buy" then rx * (1 - FEE) else rx / (1 - FEE)
-		settle(profile, order, tokens, rx, poolRx)
+		settle(player, profile, order, tokens, rx, poolRx)
 	end
 	if order.Tokens <= Config.DustTokens then
 		finishOrder(player, profile, order)
@@ -219,7 +254,7 @@ local function onMakerFill(owner: Player, order: BookOrder, tokens: number, rx: 
 	if not profile then
 		return
 	end
-	settle(profile, order, tokens, rx, rx)
+	settle(owner, profile, order, tokens, rx, rx)
 	dirty[owner] = true
 	if order.Tokens <= Config.DustTokens then
 		finishOrder(owner, profile, order)
@@ -362,6 +397,7 @@ local function fillTrigger(player: Player, profile: Profile, order: TriggerOrder
 	recordFill(p, "Sell", received / (1 - FEE), sold)
 	p.SoldRx += rx
 	profile.Balance += rx
+	Tracker.record(player, order.Ticker, "Sell", sold, rx)
 	notify(player, "Success", `{label} filled: {Format.compact(sold)} {order.Ticker} for {Format.rx(rx)}`)
 end
 
@@ -424,6 +460,7 @@ local function submitTrade(player: Player, request: any): ActionResult
 		p.Tokens += tokens
 		p.BoughtRx += spent + fees
 		recordFill(p, "Buy", spent * (1 - FEE), tokens)
+		Tracker.record(player, ticker, "Buy", tokens, spent + fees)
 
 		local bracket = request.Bracket
 		if typeof(bracket) == "table" and finite(bracket.TakeProfit) and finite(bracket.StopLoss) then
@@ -473,6 +510,7 @@ local function submitTrade(player: Player, request: any): ActionResult
 	p.Tokens -= sold
 	p.SoldRx += rx
 	profile.Balance += rx
+	Tracker.record(player, ticker, "Sell", sold, rx)
 	cleanup(player, profile, ticker)
 	pushPortfolio(player)
 	return { Ok = true, Rx = rx, Tokens = sold }
@@ -558,6 +596,7 @@ function Trading.start()
 	Market.setHolderCounter(PlayerData.countHolders)
 	OrderBook.setFillHandler(onMakerFill)
 	Launchpad.start(pushPortfolio)
+	Tracker.start(Trading.portfolioValue, pushPortfolio)
 
 	Remotes.SubmitTrade.OnServerInvoke = submitTrade
 	Remotes.PlaceLimitOrder.OnServerInvoke = placeLimitOrder
@@ -592,6 +631,8 @@ function Trading.start()
 	Players.PlayerRemoving:Connect(function(player)
 		Trading.release(player)
 		recentActions[player] = nil
+		-- Publiczne statystyki przed zapisem profilu (wartość portfela liczona z jeszcze wczytanego).
+		Tracker.release(player)
 		PlayerData.release(player)
 	end)
 	game:BindToClose(function()

@@ -29,4 +29,8 @@ return table.freeze({
 	CancelLimitOrder = func("CancelLimitOrder"), -- (id) -> ActionResult
 	ClaimFaucet = func("ClaimFaucet"), -- () -> ActionResult
 	CreateCoin = func("CreateCoin"), -- (CreateCoinRequest) -> ActionResult (z Ticker)
+	SearchWallets = func("SearchWallets"), -- (query) -> WalletSearch
+	GetWalletProfile = func("GetWalletProfile"), -- (userId) -> WalletProfile?
+	GetLeaderboard = func("GetLeaderboard"), -- () -> { LeaderboardEntry }
+	SetProfilePublic = func("SetProfilePublic"), -- (boolean) -> ActionResult
 })

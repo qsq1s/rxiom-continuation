@@ -18,13 +18,14 @@ local CoinView = require(script.CoinView)
 local DiscoverPage = require(script.DiscoverPage)
 local PortfolioPage = require(script.PortfolioPage)
 local PulsePage = require(script.PulsePage)
+local TrackerPage = require(script.TrackerPage)
 local TopBar = require(script.TopBar)
 
 local create = Util.create
 
 local CONTENT_PADDING = 32
 
-type Page = { Name: "Discover" | "Pulse" | "Coin" | "Portfolio", Ticker: string? }
+type Page = { Name: "Discover" | "Pulse" | "Trackers" | "Coin" | "Portfolio", Ticker: string? }
 
 local MainMenu = {}
 
@@ -60,6 +61,8 @@ local function pagePath(page: Page): string
 		return "/portfolio"
 	elseif page.Name == "Pulse" then
 		return "/pulse"
+	elseif page.Name == "Trackers" then
+		return "/trackers"
 	end
 	return "/discover"
 end
@@ -124,6 +127,7 @@ function MainMenu.mount(): Handle
 	local coinView: CoinView.CoinView
 	local portfolioPage: PortfolioPage.PortfolioPage
 	local pulsePage: PulsePage.PulsePage
+	local trackerPage: TrackerPage.TrackerPage
 
 	local function render(page: Page)
 		for name, frame in pages do
@@ -135,8 +139,11 @@ function MainMenu.mount(): Handle
 			portfolioPage.Refresh()
 		elseif page.Name == "Pulse" then
 			pulsePage.Refresh()
+		elseif page.Name == "Trackers" then
+			trackerPage.Refresh()
 		end
-		topBar.SetActive(if page.Name == "Portfolio" or page.Name == "Pulse" then page.Name else "Discover")
+		local section = page.Name
+		topBar.SetActive(if section == "Portfolio" or section == "Pulse" or section == "Trackers" then section else "Discover")
 		if locked then
 			return
 		end
@@ -169,6 +176,9 @@ function MainMenu.mount(): Handle
 		end,
 		Pulse = function()
 			navigate({ Name = "Pulse" })
+		end,
+		Trackers = function()
+			navigate({ Name = "Trackers" })
 		end,
 		Portfolio = function()
 			navigate({ Name = "Portfolio" })
@@ -210,6 +220,10 @@ function MainMenu.mount(): Handle
 	pulsePage = PulsePage.new(openCoin)
 	pulsePage.Frame.Parent = content
 	pages.Pulse = pulsePage.Frame
+
+	trackerPage = TrackerPage.new(openCoin)
+	trackerPage.Frame.Parent = content
+	pages.Trackers = trackerPage.Frame
 
 	BottomBar.new().Frame.Parent = site
 	Toast.mount(site, BottomBar.Height + 16)

@@ -65,7 +65,11 @@
 				"PlaceLimitOrder": { "$className": "RemoteFunction" },
 				"CancelLimitOrder": { "$className": "RemoteFunction" },
 				"ClaimFaucet": { "$className": "RemoteFunction" },
-				"CreateCoin": { "$className": "RemoteFunction" }
+				"CreateCoin": { "$className": "RemoteFunction" },
+				"SearchWallets": { "$className": "RemoteFunction" },
+				"GetWalletProfile": { "$className": "RemoteFunction" },
+				"GetLeaderboard": { "$className": "RemoteFunction" },
+				"SetProfilePublic": { "$className": "RemoteFunction" }
 			}
 		},
 		"ServerScriptService": {

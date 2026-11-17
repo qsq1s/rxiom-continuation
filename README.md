@@ -47,6 +47,15 @@ Zakładka **Pulse** pokazuje coiny tworzone przez graczy w trzech kolumnach: **N
 - Serwer trzyma na rynku naraz do 24 coinów z Pulse (najnowsze i najaktywniejsze) plus te, w których gracze na serwerze mają pozycje lub zlecenia. Najsłabsze starsze coiny bez udziału graczy schodzą z rynku, ale zostają w rejestrze.
 - W Studio bez dostępu do API coiny z Pulse działają tylko w bieżącej sesji.
 
+## Wallet Tracker
+
+Zakładka **Trackers** (`src/server/Services/Tracker.luau`, statystyki w `Stats.luau`):
+
+- Wyszukiwanie po nazwie Roblox, nazwie wyświetlanej albo adresie portfela Ghostbox. Profil pokazuje wartość portfela, zrealizowany PnL (metodą średniego kosztu), wolumen, liczbę transakcji, ulubione tokeny i miejsce w rankingu.
+- Ranking po zrealizowanym PnL (top 100, w tabeli 25 najlepszych). Trafiają do niego tylko publiczne profile z zyskiem.
+- **Prywatność**: każdy profil jest domyślnie prywatny i gracz sam go upublicznia przełącznikiem w „Your profile”. Prywatny profil nie pokazuje żadnych liczb ani adresu portfela, nie da się go znaleźć po adresie, nie ma go w rankingu, a w listach transakcji gracz widnieje pod anonimowym adresem. Saldo i pozycje nigdy nie są publikowane osobno, tylko łączna wartość portfela.
+- Publiczne dane są zapisywane w DataStore (`RXIOM_Public_v1`, ranking w OrderedDataStore `RXIOM_Leaderboard_v1`) co minutę i przy wyjściu, żeby było je widać, gdy gracz jest offline. Przejście na prywatny od razu je usuwa.
+
 ## Struktura
 
 | Folder                    | Trafia do                                   | Co zawiera                                       |

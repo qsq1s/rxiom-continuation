@@ -14,6 +14,8 @@ Portfolio.State = {
 	Orders = {},
 	Triggers = {},
 	FaucetReadyAt = 0,
+	Public = false,
+	Alias = "",
 } :: Types.PortfolioState
 Portfolio.Changed = Signal.new() -- ()
 

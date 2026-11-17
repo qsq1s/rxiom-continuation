@@ -368,7 +368,8 @@ function CoinView.new(onBack: () -> ()): CoinView
 				cells[4].Text = Format.rx(trade.Rx)
 				cells[4].TextColor3 = color
 				cells[5].Text = Format.compact(trade.Tokens)
-				local mine = trade.IsPlayer and trade.Trader == me
+				-- Prywatny gracz widnieje pod anonimowym adresem z tej sesji.
+				local mine = trade.IsPlayer and (trade.Trader == me or trade.Trader == Portfolio.State.Alias)
 				cells[6].Text = if mine then trade.Trader .. " (you)" else trade.Trader
 				cells[6].TextColor3 = if mine
 					then Colors.Text

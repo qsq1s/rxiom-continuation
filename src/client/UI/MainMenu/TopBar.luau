@@ -27,6 +27,7 @@ local NAV_ITEMS = { "Discover", "Pulse", "Trackers", "Perpetuals", "Predictions"
 export type Navigation = {
 	Discover: () -> (),
 	Pulse: () -> (),
+	Trackers: () -> (),
 	Portfolio: () -> (),
 }
 
@@ -205,6 +206,8 @@ function TopBar.new(nav: Navigation): TopBar
 				nav.Discover()
 			elseif name == "Pulse" then
 				nav.Pulse()
+			elseif name == "Trackers" then
+				nav.Trackers()
 			elseif name == "Portfolio" then
 				nav.Portfolio()
 			else

@@ -113,6 +113,51 @@ export type PortfolioState = {
 	Triggers: { TriggerOrder },
 	FaucetReadyAt: number,
 	Wallet: string?,
+	-- Czy profil jest publiczny w Wallet Trackerze.
+	Public: boolean,
+	-- Anonimowy adres, pod którym prywatny gracz widnieje w listach transakcji (w tej sesji).
+	Alias: string,
+}
+
+-- Statystyki handlu gracza (zapisywane w profilu). Basis: tokeny i ich koszt w RX do liczenia
+-- zrealizowanego PnL metodą średniego kosztu.
+export type TradeStats = {
+	Volume: number,
+	Trades: number,
+	Realized: number,
+	TokenVolume: { [string]: number },
+	Basis: { [string]: { Tokens: number, Cost: number } },
+}
+
+export type FavoriteToken = { Ticker: string, Name: string?, Volume: number }
+
+-- Profil w Wallet Trackerze. Liczby i adres portfela są tylko w profilach publicznych (albo we
+-- własnym profilu gracza); prywatny profil to sama nazwa.
+export type WalletProfile = {
+	UserId: number,
+	Name: string,
+	DisplayName: string,
+	Public: boolean,
+	Online: boolean,
+	Wallet: string?,
+	Value: number?,
+	Realized: number?,
+	Volume: number?,
+	Trades: number?,
+	Favorites: { FavoriteToken }?,
+	Rank: number?,
+	-- Czas serwera, z którego pochodzą dane gracza offline.
+	UpdatedAt: number?,
+}
+
+export type WalletSearch = { Ok: boolean, Error: string?, Results: { WalletProfile } }
+
+export type LeaderboardEntry = {
+	Rank: number,
+	UserId: number,
+	Name: string,
+	DisplayName: string,
+	Realized: number,
 }
 
 export type LoginResult = {
