@@ -228,6 +228,7 @@ function MainMenu.mount(): Handle
 		local design = Theme.DesignSize
 		local scale = math.clamp(math.min(available.X / design.X, available.Y / design.Y), 0.5, 2)
 		uiScale.Scale = scale
+		Util.setScale(scale)
 		root.Position = UDim2.fromOffset(0, chromeHeight)
 		root.Size = UDim2.fromOffset(available.X / scale, available.Y / scale)
 	end

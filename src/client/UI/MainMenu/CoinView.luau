@@ -209,12 +209,15 @@ function CoinView.new(onBack: () -> ()): CoinView
 		tradeRows[i] = tradeRow(tradesList, i, false)
 	end
 
-	-- Prawa kolumna: panel, pozycja, zlecenia
+	-- Prawa kolumna: panel, pozycja, zlecenia. ScrollingFrame przycina wszystko poza sobą, a obrysy
+	-- (UIStroke) wystają poza krawędź elementu, więc kolumna ma margines EDGE z lewej i u góry,
+	-- przesunięty tak, żeby zawartość została w tym samym miejscu.
+	local EDGE = 3
 	local right: ScrollingFrame = create("ScrollingFrame", {
 		Name = "Right",
 		AnchorPoint = Vector2.new(1, 0),
-		Position = UDim2.new(1, 0, 0, HEADER_HEIGHT + GAP),
-		Size = UDim2.new(0, PANEL_WIDTH, 1, -(HEADER_HEIGHT + GAP)),
+		Position = UDim2.new(1, 0, 0, HEADER_HEIGHT + GAP - EDGE),
+		Size = UDim2.new(0, PANEL_WIDTH + EDGE, 1, -(HEADER_HEIGHT + GAP) + EDGE),
 		BackgroundTransparency = 1,
 		BorderSizePixel = 0,
 		CanvasSize = UDim2.new(),
@@ -223,7 +226,10 @@ function CoinView.new(onBack: () -> ()): CoinView
 		ScrollBarImageColor3 = Colors.Border,
 		ScrollingDirection = Enum.ScrollingDirection.Y,
 		Parent = frame,
-	}, { Util.vlist(GAP, Enum.HorizontalAlignment.Left, Enum.VerticalAlignment.Top), Util.padding(0, 8, 8, 0) })
+	}, {
+		Util.vlist(GAP, Enum.HorizontalAlignment.Left, Enum.VerticalAlignment.Top),
+		Util.padding(EDGE, 8, 8, EDGE),
+	})
 	local panel = TradePanel.new()
 	panel.Frame.LayoutOrder = 1
 	panel.Frame.Parent = right

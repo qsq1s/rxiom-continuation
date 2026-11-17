@@ -168,13 +168,52 @@ function Util.label(p: LabelProps): TextLabel
 	})
 end
 
-function Util.divider(vertical: boolean?, color: Color3?): Frame
-	return create("Frame", {
+-- Linie podziału muszą mieć co najmniej 1 piksel ekranu: przy UIScale < 1 linia 1px robi się
+-- węższa od piksela i Roblox potrafi jej w ogóle nie narysować (zależnie od pozycji).
+local hairlinePixel = 1
+local hairlines: { [Frame]: boolean } = {}
+
+local function applyHairline(frame: Frame, vertical: boolean)
+	local size = frame.Size
+	frame.Size = if vertical
+		then UDim2.new(0, hairlinePixel, size.Y.Scale, size.Y.Offset)
+		else UDim2.new(size.X.Scale, size.X.Offset, 0, hairlinePixel)
+end
+
+-- Wywoływane przy zmianie UIScale strony.
+function Util.setScale(scale: number)
+	hairlinePixel = math.max(1, 1 / scale)
+	for frame, vertical in hairlines do
+		applyHairline(frame, vertical)
+	end
+end
+
+-- `fixed`: dla elementów poza skalowaną stroną (pasek przeglądarki), gdzie 1px to zawsze 1px ekranu.
+function Util.divider(vertical: boolean?, color: Color3?, fixed: boolean?): Frame
+	local isVertical = vertical == true
+	local thickness = if fixed then 1 else hairlinePixel
+	local frame: Frame = create("Frame", {
 		Name = "Divider",
-		Size = if vertical then UDim2.new(0, 1, 1, 0) else UDim2.new(1, 0, 0, 1),
+		Size = if isVertical then UDim2.new(0, thickness, 1, 0) else UDim2.new(1, 0, 0, thickness),
 		BackgroundColor3 = color or Theme.Colors.Border,
 		BorderSizePixel = 0,
 	})
+	if fixed then
+		return frame
+	end
+	hairlines[frame] = isVertical
+	-- Rozmiar ustawiony później przez wywołującego (np. krótszy separator) zachowuje długość.
+	frame:GetPropertyChangedSignal("Size"):Connect(function()
+		local size = frame.Size
+		local thickness = if isVertical then size.X else size.Y
+		if thickness.Scale ~= 0 or thickness.Offset ~= hairlinePixel then
+			applyHairline(frame, isVertical)
+		end
+	end)
+	frame.Destroying:Connect(function()
+		hairlines[frame] = nil
+	end)
+	return frame
 end
 
 function Util.changeColor(n: number): Color3

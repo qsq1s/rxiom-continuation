@@ -145,7 +145,7 @@ function Browser.new(callbacks: Callbacks): Browser
 		BorderSizePixel = 0,
 		Parent = frame,
 	})
-	local divider = Util.divider()
+	local divider = Util.divider(false, nil, true)
 	divider.AnchorPoint = Vector2.new(0, 1)
 	divider.Position = UDim2.fromScale(0, 1)
 	divider.Parent = toolbar
