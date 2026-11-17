@@ -142,7 +142,13 @@ Icons.LogoAspect = LOGO_BOUNDS.Width / LOGO_BOUNDS.Height
 -- skaluje się razem z UI. Dawniej paski miały po pół piksela i +1 px zapasu: po zaokrągleniu przez
 -- Robloxa nachodziły na siebie, zalewały dziurkę "R" i rozjeżdżały krawędzie. Szpary z zaokrągleń
 -- łatają łączniki na styku wierszy, położone tylko tam, gdzie oba wiersze są wypełnione.
-local function rasterize(parent: GuiObject, polygons: { { Vector2 } }, bounds: Rect, rows: number, fill: Color3)
+local function rasterize(
+	parent: GuiObject,
+	polygons: { { Vector2 } },
+	bounds: Rect,
+	rows: number,
+	fill: Color3 | (t: number) -> Color3
+)
 	local spans: { { number } } = {}
 	for row = 0, rows - 1 do
 		local xs = {}
@@ -160,7 +166,8 @@ local function rasterize(parent: GuiObject, polygons: { { Vector2 } }, bounds: R
 		create("Frame", {
 			Position = UDim2.fromScale(x0, y / rows),
 			Size = UDim2.fromScale(x1 - x0, 1 / rows),
-			BackgroundColor3 = fill,
+			-- `fill` jako funkcja: kolor zależny od wysokości (0 = góra, 1 = dół), np. gradient.
+			BackgroundColor3 = if typeof(fill) == "function" then fill((y + 0.5) / rows) else fill,
 			BorderSizePixel = 0,
 			Parent = parent,
 		})
@@ -239,29 +246,6 @@ function Icons.shieldBadge(height: number, order: number?): Frame
 	return frame
 end
 
--- Grafika marki wgrana na Roblox, przycięta do `Crop` (w pikselach oryginału). Przycięcie robi ramka
--- z ClipsDescendants i powiększony obrazek w środku, więc działa niezależnie od tego, do jakiej
--- rozdzielczości Roblox przeskalował wgrany plik.
-local function croppedImage(name: string, spec: Theme.ImageSpec, width: number, height: number, order: number?): Frame
-	local frame: Frame = create("Frame", {
-		Name = name,
-		BackgroundTransparency = 1,
-		ClipsDescendants = true,
-		Size = UDim2.fromOffset(width, height),
-		LayoutOrder = order or 0,
-	})
-	local crop, size = spec.Crop, spec.Size
-	create("ImageLabel", {
-		Name = "Image",
-		BackgroundTransparency = 1,
-		Image = "rbxassetid://" .. spec.Id,
-		Position = UDim2.fromScale(-crop.Min.X / crop.Width, -crop.Min.Y / crop.Height),
-		Size = UDim2.fromScale(size.X / crop.Width, size.Y / crop.Height),
-		Parent = frame,
-	})
-	return frame
-end
-
 export type Direction = "Down" | "Up" | "Left" | "Right"
 
 function Icons.chevron(size: number, color: Color3, direction: Direction?, order: number?): Frame
@@ -315,9 +299,93 @@ function Icons.star(size: number, color: Color3, order: number?): Frame
 	return frame
 end
 
--- Ikona waluty RXI: moneta z grafiki marki.
+-- Moneta RXI: kontury obrysowane z grafiki marki (współrzędne 0-1). Rysowana z ramek, więc tło
+-- jest przezroczyste (wgrana grafika miała czarne tło, którego Roblox nie umie wyciąć).
+local COIN_OUTER = {
+	Vector2.new(0.0104, 0.5000),
+	Vector2.new(0.2917, 0.1458),
+	Vector2.new(0.7292, 0.0521),
+	Vector2.new(0.9479, 0.2500),
+	Vector2.new(0.9896, 0.3958),
+	Vector2.new(0.8750, 0.7292),
+	Vector2.new(0.5625, 0.9479),
+	Vector2.new(0.1875, 0.8958),
+}
+local COIN_FACE = {
+	Vector2.new(0.0208, 0.4896),
+	Vector2.new(0.3021, 0.1458),
+	Vector2.new(0.6771, 0.0521),
+	Vector2.new(0.9375, 0.2396),
+	Vector2.new(0.8229, 0.6250),
+	Vector2.new(0.5000, 0.8646),
+	Vector2.new(0.1250, 0.8125),
+	Vector2.new(0.0104, 0.5521),
+}
+local COIN_INNER = {
+	Vector2.new(0.1042, 0.4688),
+	Vector2.new(0.3333, 0.1979),
+	Vector2.new(0.6354, 0.1250),
+	Vector2.new(0.8438, 0.2812),
+	Vector2.new(0.7292, 0.6146),
+	Vector2.new(0.4688, 0.7812),
+	Vector2.new(0.1875, 0.7292),
+	Vector2.new(0.0938, 0.5208),
+}
+local COIN_SQUARE = {
+	Vector2.new(0.3542, 0.2812),
+	Vector2.new(0.6979, 0.3021),
+	Vector2.new(0.5625, 0.6667),
+	Vector2.new(0.2083, 0.6042),
+}
+local COIN_HOLE = {
+	Vector2.new(0.4271, 0.4062),
+	Vector2.new(0.5417, 0.4271),
+	Vector2.new(0.5000, 0.5104),
+	Vector2.new(0.3958, 0.5000),
+}
+local COIN_LAYERS: { { Polygons: { { Vector2 } }, Fill: Color3 | (t: number) -> Color3 } } = {
+	-- Bok monety (widoczny pod frontem po prawej i u dołu).
+	{
+		Polygons = { COIN_OUTER },
+		Fill = function(t: number): Color3
+			return Color3.fromHex("C9C9C9"):Lerp(Color3.fromHex("6E6E6E"), t)
+		end,
+	},
+	{
+		Polygons = { COIN_FACE },
+		Fill = function(t: number): Color3
+			return Color3.fromHex("FFFFFF"):Lerp(Color3.fromHex("D0D0D0"), t)
+		end,
+	},
+	{ Polygons = { COIN_INNER }, Fill = Color3.fromHex("0A0A0A") },
+	-- Kwadrat z dziurą (reguła parzystości).
+	{ Polygons = { COIN_SQUARE, COIN_HOLE }, Fill = Color3.fromHex("F2F2F2") },
+}
+local COIN_UNIT = Rect.new(0, 0, 1, 1)
+-- Gotowe monety w danym rozmiarze, klonowane zamiast rysowania od nowa (każda to ~100 ramek).
+local coinTemplates: { [number]: Frame } = {}
+
+-- Ikona waluty RXI.
 function Icons.currency(size: number, order: number?): Frame
-	return croppedImage("CurrencyIcon", Theme.Images.Coin, size, size, order)
+	local template = coinTemplates[size]
+	if not template then
+		template = box("CurrencyIcon", size)
+		local rows = math.max(10, math.ceil(size))
+		for i, layer in COIN_LAYERS do
+			local container: Frame = create("Frame", {
+				Name = "Layer" .. i,
+				BackgroundTransparency = 1,
+				Size = UDim2.fromScale(1, 1),
+				ZIndex = i,
+				Parent = template,
+			})
+			rasterize(container, layer.Polygons, COIN_UNIT, rows, layer.Fill)
+		end
+		coinTemplates[size] = template
+	end
+	local icon = template:Clone()
+	icon.LayoutOrder = order or 0
+	return icon
 end
 
 function Icons.dot(size: number, color: Color3, order: number?): Frame

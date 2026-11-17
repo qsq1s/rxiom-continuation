@@ -48,19 +48,6 @@ Theme.DesignSize = Vector2.new(1600, 820)
 
 Theme.Site = "rxiom.pro"
 
--- Grafiki marki wgrane na Roblox (typ Image). Size to rozmiar wgranego pliku, a Crop to wycinek
--- z samym znakiem, w pikselach tego pliku. Po wgraniu innej wersji pliku zaktualizuj Size i Crop.
-export type ImageSpec = { Id: number, Size: Vector2, Crop: Rect }
-
-Theme.Images = table.freeze({
-	-- Kwadrat wokół monety (746x746), żeby ikona miała proporcje 1:1.
-	Coin = table.freeze({
-		Id = 126450260339769,
-		Size = Vector2.new(1672, 941),
-		Crop = Rect.new(478, 90, 1224, 836),
-	}) :: ImageSpec,
-})
-
 -- Waluta w grze (odpowiednik SOL na Axiom).
 Theme.Currency = require(game:GetService("ReplicatedStorage").Shared.Config).Currency
 
