@@ -423,41 +423,89 @@ function Icons.close(size: number, color: Color3, order: number?): Frame
 	return frame
 end
 
+-- Odcinek z zaokrąglonymi końcami; kilka takich odcinków łączy się w czysty grot bez szpar.
+local function capsule(parent: Instance, a: Vector2, b: Vector2, thickness: number, color: Color3)
+	local d = b - a
+	create("Frame", {
+		AnchorPoint = Vector2.new(0.5, 0.5),
+		Position = UDim2.fromOffset((a.X + b.X) / 2, (a.Y + b.Y) / 2),
+		Size = UDim2.fromOffset(d.Magnitude + thickness, thickness),
+		Rotation = math.deg(math.atan2(d.Y, d.X)),
+		BackgroundColor3 = color,
+		BorderSizePixel = 0,
+		Parent = parent,
+	}, { Util.round() })
+end
+
+-- Ikony przeglądarki w geometrii Material (siatka 24x24, jak w Chrome) przeskalowanej do `size`.
+local function strokeWidth(size: number): number
+	return math.max(1.5, size / 10)
+end
+
 -- Strzałka (wstecz / dalej w pasku przeglądarki).
 function Icons.arrow(size: number, color: Color3, direction: "Left" | "Right", order: number?): Frame
 	local frame = box("ArrowIcon", size, order)
-	local s = size
-	local tip = if direction == "Left" then s * 0.15 else s * 0.85
-	local back = if direction == "Left" then s * 0.85 else s * 0.15
-	local wing = s * 0.5
-	line(frame, Vector2.new(back, s * 0.5), Vector2.new(tip, s * 0.5), 1.8, color)
-	line(frame, Vector2.new(tip, s * 0.5), Vector2.new(wing, s * 0.15), 1.8, color)
-	line(frame, Vector2.new(tip, s * 0.5), Vector2.new(wing, s * 0.85), 1.8, color)
+	local f = size / 24
+	local t = strokeWidth(size)
+	local flip = direction == "Right"
+	local function x(v: number): number
+		return if flip then size - v * f else v * f
+	end
+	local c = size / 2
+	local tip = Vector2.new(x(4), c)
+	capsule(frame, Vector2.new(x(20), c), tip, t, color)
+	capsule(frame, tip, Vector2.new(x(12), c - 8 * f), t, color)
+	capsule(frame, tip, Vector2.new(x(12), c + 8 * f), t, color)
 	return frame
 end
 
--- Odśwież: okrąg z przerwą i grotem w prawym górnym rogu.
-function Icons.refresh(size: number, color: Color3, background: Color3, order: number?): Frame
+-- Odśwież: łuk z przerwą po prawej i pełnym grotem w prawym górnym rogu. Łuk to okrąg (UIStroke)
+-- pokazywany przez trzy przycinające ramki, grot to obrócony kwadrat przycięty do trójkąta.
+function Icons.refresh(size: number, color: Color3, order: number?): Frame
 	local frame = box("RefreshIcon", size, order)
-	local inset = size * 0.1
-	outline(frame, Vector2.new(inset, inset), Vector2.new(size - inset * 2, size - inset * 2), color, size, 1.8)
+	local f = size / 24
+	local t = strokeWidth(size)
+	local c, r = 12 * f, 7 * f
+
+	local function clip(x0: number, y0: number, x1: number, y1: number, z: number): Frame
+		return create("Frame", {
+			Name = "Clip",
+			BackgroundTransparency = 1,
+			ClipsDescendants = true,
+			Position = UDim2.fromOffset(x0, y0),
+			Size = UDim2.fromOffset(x1 - x0, y1 - y0),
+			ZIndex = z,
+			Parent = frame,
+		})
+	end
+	local function ring(parent: Frame)
+		-- UIStroke rysuje się na zewnątrz ramki, więc ramka ma promień r - t/2.
+		local inner = r - t / 2
+		local origin = (parent :: GuiObject).Position
+		create("Frame", {
+			Name = "Ring",
+			BackgroundTransparency = 1,
+			Position = UDim2.fromOffset(c - inner - origin.X.Offset, c - inner - origin.Y.Offset),
+			Size = UDim2.fromOffset(inner * 2, inner * 2),
+			Parent = parent,
+		}, { Util.round(), Util.stroke(color, t) })
+	end
+	ring(clip(0, 0, c, size, 1))
+	ring(clip(c, 0, size, 11 * f, 1))
+	ring(clip(c, 14 * f, size, size, 1))
+
+	local head = clip(13 * f, 4 * f, 20 * f, 11 * f, 2)
+	local side = 7 * f * math.sqrt(2)
 	create("Frame", {
-		Position = UDim2.fromOffset(size * 0.55, 0),
-		Size = UDim2.fromOffset(size * 0.45, size * 0.42),
-		BackgroundColor3 = background,
+		Name = "Head",
+		AnchorPoint = Vector2.new(0.5, 0.5),
+		Position = UDim2.fromOffset(7 * f, 7 * f),
+		Size = UDim2.fromOffset(side, side),
+		Rotation = 45,
+		BackgroundColor3 = color,
 		BorderSizePixel = 0,
-		ZIndex = 2,
-		Parent = frame,
+		Parent = head,
 	})
-	local tip = Vector2.new(size * 0.88, size * 0.42)
-	local arrowFrame = create("Frame", {
-		BackgroundTransparency = 1,
-		Size = UDim2.fromScale(1, 1),
-		ZIndex = 3,
-		Parent = frame,
-	})
-	line(arrowFrame, tip, Vector2.new(size * 0.88, size * 0.12), 1.8, color)
-	line(arrowFrame, tip, Vector2.new(size * 0.6, size * 0.42), 1.8, color)
 	return frame
 end
 

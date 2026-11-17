@@ -32,6 +32,8 @@ export type Browser = {
 
 local Browser = {}
 
+local DISABLED_ICON = Color3.fromHex("6B6B6B")
+
 local function toolButton(name: string, order: number): TextButton
 	local button: TextButton = create("TextButton", {
 		Name = name,
@@ -155,15 +157,15 @@ function Browser.new(callbacks: Callbacks): Browser
 	nav.Position = UDim2.new(0, 10, 0.5, 0)
 	nav.Parent = toolbar
 	local backButton = toolButton("Back", 1)
-	local backIcon = Icons.arrow(14, Colors.Text, "Left")
+	local backIcon = Icons.arrow(20, Colors.Text, "Left")
 	center(backIcon, backButton)
 	backButton.Parent = nav
 	local forwardButton = toolButton("Forward", 2)
-	local forwardIcon = Icons.arrow(14, Colors.Text, "Right")
+	local forwardIcon = Icons.arrow(20, Colors.Text, "Right")
 	center(forwardIcon, forwardButton)
 	forwardButton.Parent = nav
 	local refreshButton = toolButton("Refresh", 3)
-	center(Icons.refresh(14, Colors.Text, Colors.ChromeBar), refreshButton)
+	center(Icons.refresh(20, Colors.Text), refreshButton)
 	refreshButton.Parent = nav
 
 	local address: Frame = create("Frame", {
@@ -200,7 +202,8 @@ function Browser.new(callbacks: Callbacks): Browser
 	local function setIconColor(icon: Frame, enabled: boolean)
 		for _, part in icon:GetChildren() do
 			if part:IsA("Frame") then
-				part.BackgroundColor3 = if enabled then Colors.Text else Colors.TextDim
+				-- Nieaktywna strzałka jak w Chrome: przygaszona, ale wciąż czytelna.
+				part.BackgroundColor3 = if enabled then Colors.Text else DISABLED_ICON
 			end
 		end
 	end
