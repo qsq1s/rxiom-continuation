@@ -1,6 +1,7 @@
 --!strict
 -- Ikony: proste kształty rysowane z ramek oraz grafiki marki (logo RXIOM i moneta RXI).
 
+local Raster = require(script.Parent.Raster)
 local Theme = require(script.Parent.Theme)
 local Util = require(script.Parent.Util)
 
@@ -459,54 +460,46 @@ function Icons.arrow(size: number, color: Color3, direction: "Left" | "Right", o
 	return frame
 end
 
--- Odśwież: łuk z przerwą po prawej i pełnym grotem w prawym górnym rogu. Łuk to okrąg (UIStroke)
--- pokazywany przez trzy przycinające ramki, grot to obrócony kwadrat przycięty do trójkąta.
-function Icons.refresh(size: number, color: Color3, order: number?): Frame
-	local frame = box("RefreshIcon", size, order)
-	local f = size / 24
-	local t = strokeWidth(size)
-	local c, r = 12 * f, 7 * f
-
-	local function clip(x0: number, y0: number, x1: number, y1: number, z: number): Frame
-		return create("Frame", {
-			Name = "Clip",
-			BackgroundTransparency = 1,
-			ClipsDescendants = true,
-			Position = UDim2.fromOffset(x0, y0),
-			Size = UDim2.fromOffset(x1 - x0, y1 - y0),
-			ZIndex = z,
-			Parent = frame,
-		})
+-- Ikona z pokrycia pikseli: pełne piksele łączone w poziome paski, brzegi jako pojedyncze piksele
+-- z przezroczystością (wygładzenie). Wymaga pozycji w pełnych pikselach ekranu (bez UIScale).
+local function rasterIcon(name: string, size: number, color: Color3, shape: Raster.Shape, order: number?): Frame
+	size = math.floor(size)
+	local frame = box(name, size, order)
+	for y, row in Raster.coverage(size, shape) do
+		local x = 1
+		while x <= size do
+			local alpha = row[x]
+			if alpha >= 0.99 then
+				local first = x
+				while x < size and row[x + 1] >= 0.99 do
+					x += 1
+				end
+				create("Frame", {
+					Position = UDim2.fromOffset(first - 1, y - 1),
+					Size = UDim2.fromOffset(x - first + 1, 1),
+					BackgroundColor3 = color,
+					BorderSizePixel = 0,
+					Parent = frame,
+				})
+			elseif alpha > 0.04 then
+				create("Frame", {
+					Position = UDim2.fromOffset(x - 1, y - 1),
+					Size = UDim2.fromOffset(1, 1),
+					BackgroundColor3 = color,
+					BackgroundTransparency = 1 - alpha,
+					BorderSizePixel = 0,
+					Parent = frame,
+				})
+			end
+			x += 1
+		end
 	end
-	local function ring(parent: Frame)
-		-- UIStroke rysuje się na zewnątrz ramki, więc ramka ma promień r - t/2.
-		local inner = r - t / 2
-		local origin = (parent :: GuiObject).Position
-		create("Frame", {
-			Name = "Ring",
-			BackgroundTransparency = 1,
-			Position = UDim2.fromOffset(c - inner - origin.X.Offset, c - inner - origin.Y.Offset),
-			Size = UDim2.fromOffset(inner * 2, inner * 2),
-			Parent = parent,
-		}, { Util.round(), Util.stroke(color, t) })
-	end
-	ring(clip(0, 0, c, size, 1))
-	ring(clip(c, 0, size, 11 * f, 1))
-	ring(clip(c, 14 * f, size, size, 1))
-
-	local head = clip(13 * f, 4 * f, 20 * f, 11 * f, 2)
-	local side = 7 * f * math.sqrt(2)
-	create("Frame", {
-		Name = "Head",
-		AnchorPoint = Vector2.new(0.5, 0.5),
-		Position = UDim2.fromOffset(7 * f, 7 * f),
-		Size = UDim2.fromOffset(side, side),
-		Rotation = 45,
-		BackgroundColor3 = color,
-		BorderSizePixel = 0,
-		Parent = head,
-	})
 	return frame
+end
+
+-- Odśwież: dwie strzałki w kółku.
+function Icons.refresh(size: number, color: Color3, order: number?): Frame
+	return rasterIcon("RefreshIcon", size, color, Raster.sync, order)
 end
 
 -- Kłódka przed adresem strony.
