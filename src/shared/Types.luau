@@ -19,9 +19,21 @@ export type BookLevel = { Price: number, Tokens: number, Orders: number }
 -- Bids malejąco, Asks rosnąco po cenie.
 export type BookDepth = { Bids: { BookLevel }, Asks: { BookLevel } }
 
+-- Coin z Pulse (stworzony przez gracza). Name i Color pozwalają klientowi poznać nowy coin.
+export type LaunchInfo = {
+	Name: string,
+	Color: Color3,
+	Creator: string,
+	-- Postęp bonding curve w % (0-100).
+	Progress: number,
+	Migrated: boolean,
+	MigratedAt: number?,
+}
+
 export type CoinSnapshot = {
 	Ticker: string,
 	Book: BookDepth,
+	Launch: LaunchInfo?,
 	Price: number,
 	PoolRx: number,
 	PoolTokens: number,
@@ -131,11 +143,19 @@ export type LimitRequest = {
 	Amount: number,
 }
 
+-- Nowy coin na Pulse. Color to numer z Config.Launch.Colors.
+export type CreateCoinRequest = {
+	Name: string,
+	Ticker: string,
+	Color: number,
+}
+
 export type ActionResult = {
 	Ok: boolean,
 	Error: string?,
 	Rx: number?,
 	Tokens: number?,
+	Ticker: string?,
 }
 
 export type Notice = { Kind: "Success" | "Error" | "Info", Text: string }

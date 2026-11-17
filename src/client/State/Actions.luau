@@ -126,6 +126,27 @@ function Actions.cancelOrder(id: string | number)
 	)
 end
 
+-- Tworzy coin na Pulse. Czeka, aż coin pojawi się w snapshocie rynku (żeby dało się go od razu
+-- otworzyć), a potem opcjonalnie kupuje go za `devBuy` RXI. Zwraca ticker albo nil.
+function Actions.createCoin(name: string, ticker: string, color: number, devBuy: number): string?
+	local request: Types.CreateCoinRequest = { Name = name, Ticker = ticker, Color = color }
+	local result = invoke(Remotes.CreateCoin, request)
+	local created = result.Ticker
+	if not result.Ok or not created then
+		Toast.show(result.Error or "Couldn't create the coin", "Error")
+		return nil
+	end
+	local deadline = os.clock() + 5
+	while not Market.pool(created) and os.clock() < deadline do
+		task.wait(0.1)
+	end
+	Toast.show(`{created} is live on Pulse`, "Success")
+	if devBuy > 0 and Market.pool(created) then
+		Actions.buy(created, devBuy)
+	end
+	return created
+end
+
 function Actions.claimFaucet()
 	local result = invoke(Remotes.ClaimFaucet, nil)
 	if result.Ok then

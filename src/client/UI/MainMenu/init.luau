@@ -17,13 +17,14 @@ local BottomBar = require(script.BottomBar)
 local CoinView = require(script.CoinView)
 local DiscoverPage = require(script.DiscoverPage)
 local PortfolioPage = require(script.PortfolioPage)
+local PulsePage = require(script.PulsePage)
 local TopBar = require(script.TopBar)
 
 local create = Util.create
 
 local CONTENT_PADDING = 32
 
-type Page = { Name: "Discover" | "Coin" | "Portfolio", Ticker: string? }
+type Page = { Name: "Discover" | "Pulse" | "Coin" | "Portfolio", Ticker: string? }
 
 local MainMenu = {}
 
@@ -57,6 +58,8 @@ local function pagePath(page: Page): string
 		return "/meme/" .. string.lower(page.Ticker or "")
 	elseif page.Name == "Portfolio" then
 		return "/portfolio"
+	elseif page.Name == "Pulse" then
+		return "/pulse"
 	end
 	return "/discover"
 end
@@ -120,6 +123,7 @@ function MainMenu.mount(): Handle
 	local topBar: TopBar.TopBar
 	local coinView: CoinView.CoinView
 	local portfolioPage: PortfolioPage.PortfolioPage
+	local pulsePage: PulsePage.PulsePage
 
 	local function render(page: Page)
 		for name, frame in pages do
@@ -129,8 +133,10 @@ function MainMenu.mount(): Handle
 			coinView.Open(page.Ticker)
 		elseif page.Name == "Portfolio" then
 			portfolioPage.Refresh()
+		elseif page.Name == "Pulse" then
+			pulsePage.Refresh()
 		end
-		topBar.SetActive(if page.Name == "Portfolio" then "Portfolio" else "Discover")
+		topBar.SetActive(if page.Name == "Portfolio" or page.Name == "Pulse" then page.Name else "Discover")
 		if locked then
 			return
 		end
@@ -160,6 +166,9 @@ function MainMenu.mount(): Handle
 	local navigation: TopBar.Navigation = {
 		Discover = function()
 			navigate({ Name = "Discover" })
+		end,
+		Pulse = function()
+			navigate({ Name = "Pulse" })
 		end,
 		Portfolio = function()
 			navigate({ Name = "Portfolio" })
@@ -197,6 +206,10 @@ function MainMenu.mount(): Handle
 	portfolioPage = PortfolioPage.new(openCoin)
 	portfolioPage.Frame.Parent = content
 	pages.Portfolio = portfolioPage.Frame
+
+	pulsePage = PulsePage.new(openCoin)
+	pulsePage.Frame.Parent = content
+	pages.Pulse = pulsePage.Frame
 
 	BottomBar.new().Frame.Parent = site
 	Toast.mount(site, BottomBar.Height + 16)

@@ -4,6 +4,7 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Amm = require(ReplicatedStorage.Shared.Amm)
+local Coins = require(ReplicatedStorage.Shared.Coins)
 local Config = require(ReplicatedStorage.Shared.Config)
 local Remotes = require(ReplicatedStorage.Shared.Remotes)
 local Signal = require(ReplicatedStorage.Shared.Signal)
@@ -40,6 +41,13 @@ local function mergeCandle(ticker: string, candle: Candle): boolean
 end
 
 local function apply(snapshot: Types.MarketSnapshot)
+	-- Nowe coiny z Pulse poznajemy ze snapshotu (nazwa, kolor, twórca).
+	for ticker, coin in snapshot.Coins do
+		local launch = coin.Launch
+		if launch and not Coins.get(ticker) then
+			Coins.register(Coins.launch(ticker, launch.Name, launch.Color, launch.Creator))
+		end
+	end
 	Market.Coins = snapshot.Coins
 	local candleTickers = {}
 	for ticker, coin in snapshot.Coins do

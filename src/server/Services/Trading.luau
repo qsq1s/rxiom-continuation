@@ -6,12 +6,12 @@ local HttpService = game:GetService("HttpService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-local Coins = require(ReplicatedStorage.Shared.Coins)
 local Config = require(ReplicatedStorage.Shared.Config)
 local Format = require(ReplicatedStorage.Shared.Format)
 local Remotes = require(ReplicatedStorage.Shared.Remotes)
 local Types = require(ReplicatedStorage.Shared.Types)
 local Amm = require(ReplicatedStorage.Shared.Amm)
+local Launchpad = require(script.Parent.Launchpad)
 local Market = require(script.Parent.Market)
 local OrderBook = require(script.Parent.OrderBook)
 local PlayerData = require(script.Parent.PlayerData)
@@ -380,7 +380,7 @@ local function submitTrade(player: Player, request: any): ActionResult
 		return fail("Invalid request")
 	end
 	local ticker: string = request.Ticker
-	if not Coins.ByTicker[ticker] or not Market.get(ticker) then
+	if not Market.get(ticker) then
 		return fail("Unknown coin")
 	end
 	if request.Side ~= "Buy" and request.Side ~= "Sell" then
@@ -519,6 +519,9 @@ function Trading.checkOrders()
 		local changed = false
 		for i = #list, 1, -1 do
 			local order = list[i]
+			if not Market.get(order.Ticker) then
+				continue
+			end
 			local mc = Market.marketCap(order.Ticker)
 			if mc >= order.Above or mc <= order.Below then
 				table.remove(list, i)
@@ -554,6 +557,7 @@ end
 function Trading.start()
 	Market.setHolderCounter(PlayerData.countHolders)
 	OrderBook.setFillHandler(onMakerFill)
+	Launchpad.start(pushPortfolio)
 
 	Remotes.SubmitTrade.OnServerInvoke = submitTrade
 	Remotes.PlaceLimitOrder.OnServerInvoke = placeLimitOrder
@@ -580,6 +584,8 @@ function Trading.start()
 	end
 
 	PlayerData.Loaded:Connect(function(player: Player)
+		-- Coiny z Pulse, w których gracz ma udział, muszą być na rynku przed odtworzeniem zleceń.
+		Launchpad.ensureActive(player)
 		restoreOrders(player)
 		pushPortfolio(player)
 	end)

@@ -296,7 +296,16 @@ function CoinView.new(onBack: () -> ()): CoinView
 		end
 		local tf = Settings.State.Timeframe
 		local s = coin.Stats[tf]
-		ageLabel.Text = Format.age(Market.now() - coin.LaunchedAt)
+		local age = Format.age(Market.now() - coin.LaunchedAt)
+		local launch = coin.Launch
+		if launch then
+			local stage = if launch.Migrated
+				then "Migrated"
+				else `{math.floor(launch.Progress)}% bonding curve`
+			ageLabel.Text = `{age}  ·  {stage}  ·  by {launch.Creator}`
+		else
+			ageLabel.Text = age
+		end
 		priceStat.Value.Text = "$" .. Format.decimal(coin.Price * Config.UsdPerRx)
 		priceStat.Sub.Text = Format.decimal(coin.Price) .. " " .. Config.Currency
 		mcStat.Value.Text = Format.usd(coin.MarketCap)
@@ -506,7 +515,7 @@ function CoinView.new(onBack: () -> ()): CoinView
 	return {
 		Frame = frame,
 		Open = function(newTicker: string)
-			local def = Coins.ByTicker[newTicker]
+			local def = Coins.get(newTicker)
 			if not def then
 				return
 			end

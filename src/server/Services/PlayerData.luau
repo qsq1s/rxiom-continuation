@@ -67,7 +67,7 @@ local function sanitizeOrder(o: any): Types.BookOrder?
 		or typeof(o.Id) ~= "string"
 		or #o.Id > 64
 		or typeof(o.Ticker) ~= "string"
-		or not Coins.ByTicker[o.Ticker]
+		or not Coins.validTicker(o.Ticker)
 		or (o.Side ~= "Buy" and o.Side ~= "Sell")
 		or not finite(o.Price)
 		or o.Price <= 0
@@ -116,8 +116,9 @@ local function sanitize(data: any): Profile
 	end
 	if typeof(data.Positions) == "table" then
 		for ticker, p in data.Positions do
+			-- Coiny z Pulse mogą nie być jeszcze aktywne na tym serwerze, więc liczy się tylko format.
 			if
-				Coins.ByTicker[ticker]
+				Coins.validTicker(ticker)
 				and typeof(p) == "table"
 				and finite(p.Tokens)
 				and finite(p.BoughtRx)
@@ -242,6 +243,21 @@ function PlayerData.countHolders(ticker: string): number
 		end
 	end
 	return count
+end
+
+-- Czy ktoś z graczy na serwerze ma w coinie pozycję (także zablokowaną w zleceniach) albo zlecenie.
+function PlayerData.hasStake(ticker: string): boolean
+	for _, profile in profiles do
+		if profile.Positions[ticker] then
+			return true
+		end
+		for _, order in profile.Orders do
+			if order.Ticker == ticker then
+				return true
+			end
+		end
+	end
+	return false
 end
 
 -- Zapisuje i usuwa profil gracza opuszczającego grę.

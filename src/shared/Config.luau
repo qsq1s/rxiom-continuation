@@ -40,6 +40,25 @@ local Config = {
 
 	Faucet = { Amount = 1, Cooldown = 300 },
 
+	-- Pulse: coiny tworzone przez graczy, z bonding curve jak na pump.fun.
+	Launch = {
+		Fee = 0.02,
+		StartMarketCap = 4_000,
+		-- Po osiągnięciu tego market cap coin "migruje" (trafia do kolumny Migrated na stałe).
+		MigrationMarketCap = 40_000,
+		-- Wirtualna płynność RXI na starcie; im mniejsza, tym mocniej ruszają cenę pojedyncze zakupy.
+		PoolRx = 8,
+		-- Od tylu % bonding curve coin trafia do Final Stretch.
+		FinalStretch = 50,
+		-- Średnia liczba transakcji botów na sekundę na coinie z Pulse.
+		Activity = 1,
+		-- Sekundy między kolejnymi coinami jednego gracza.
+		Cooldown = 60,
+		-- Ile coinów z Pulse serwer trzyma na rynku naraz (wszystkie trafiają do snapshotu co sekundę).
+		MaxActive = 24,
+		Colors = { "F5C542", "526FFF", "2FE3AC", "EC397A", "A855F7", "F7931A", "38BDF8", "84CC16" },
+	},
+
 	SlippageOptions = { 5, 10, 20, 50 },
 	PriorityFeeOptions = { 0.0001, 0.001, 0.005 },
 	TipOptions = { 0, 0.001, 0.01 },

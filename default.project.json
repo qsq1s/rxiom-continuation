@@ -64,7 +64,8 @@
 				"SubmitTrade": { "$className": "RemoteFunction" },
 				"PlaceLimitOrder": { "$className": "RemoteFunction" },
 				"CancelLimitOrder": { "$className": "RemoteFunction" },
-				"ClaimFaucet": { "$className": "RemoteFunction" }
+				"ClaimFaucet": { "$className": "RemoteFunction" },
+				"CreateCoin": { "$className": "RemoteFunction" }
 			}
 		},
 		"ServerScriptService": {

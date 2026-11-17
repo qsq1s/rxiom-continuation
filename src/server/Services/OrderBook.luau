@@ -91,6 +91,22 @@ function OrderBook.setFillHandler(fn: FillHandler)
 	onFill = fn
 end
 
+function OrderBook.addCoin(ticker: string)
+	if not books[ticker] then
+		books[ticker] = { Bids = {}, Asks = {} }
+	end
+end
+
+-- Usuwa pustą księgę coina. Zwraca false (i nic nie robi), gdy w księdze są zlecenia.
+function OrderBook.removeCoin(ticker: string): boolean
+	local book = books[ticker]
+	if book and (#book.Bids > 0 or #book.Asks > 0) then
+		return false
+	end
+	books[ticker] = nil
+	return true
+end
+
 function OrderBook.depth(ticker: string): Types.BookDepth
 	local book = books[ticker]
 	if not book then

@@ -28,4 +28,5 @@ return table.freeze({
 	-- id: string dla zlecenia z księgi, number dla TP/SL
 	CancelLimitOrder = func("CancelLimitOrder"), -- (id) -> ActionResult
 	ClaimFaucet = func("ClaimFaucet"), -- () -> ActionResult
+	CreateCoin = func("CreateCoin"), -- (CreateCoinRequest) -> ActionResult (z Ticker)
 })

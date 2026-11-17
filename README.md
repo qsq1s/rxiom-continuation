@@ -37,6 +37,16 @@ Każdy coin ma na serwerze księgę zleceń z priorytetem ceny i czasu (`src/ser
 
 Limity: 20 otwartych zleceń limit na gracza, cena najwyżej 100× od ceny rynkowej.
 
+## Pulse (coiny graczy)
+
+Zakładka **Pulse** pokazuje coiny tworzone przez graczy w trzech kolumnach: **New Pairs**, **Final Stretch** (od 50% bonding curve) i **Migrated**. Logika jest w `src/server/Services/Launchpad.luau`, ustawienia w `Config.Launch`.
+
+- **Create coin**: nazwa (2–24 znaki), ticker (2–8 znaków A–Z/0–9, unikalny), kolor i opcjonalny dev buy. Opłata 0.02 RXI, jeden coin na minutę na gracza. Nazwa i ticker przechodzą przez filtr tekstu Robloxa.
+- Coin startuje z małą wirtualną pulą ($4K market cap) i migruje na stałe po osiągnięciu $40K. Boty handlują coinami z Pulse z losowym „hype’em”, więc część z nich pompuje aż do migracji, a część umiera.
+- Definicje coinów i stan ich pul są zapisywane we wspólnym rejestrze w DataStore (`RXIOM_Launches_v1`), więc coiny i pozycje w nich przeżywają restart i są widoczne na innych serwerach. Każdy serwer prowadzi własny rynek i co minutę zapisuje pule; migracja jest trwała wszędzie.
+- Serwer trzyma na rynku naraz do 24 coinów z Pulse (najnowsze i najaktywniejsze) plus te, w których gracze na serwerze mają pozycje lub zlecenia. Najsłabsze starsze coiny bez udziału graczy schodzą z rynku, ale zostają w rejestrze.
+- W Studio bez dostępu do API coiny z Pulse działają tylko w bieżącej sesji.
+
 ## Struktura
 
 | Folder                    | Trafia do                                   | Co zawiera                                       |

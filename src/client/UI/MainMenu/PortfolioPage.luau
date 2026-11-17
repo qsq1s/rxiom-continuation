@@ -172,7 +172,7 @@ function PortfolioPage.new(openCoin: (ticker: string) -> ()): PortfolioPage
 
 		local state = Portfolio.State
 		local totalValue, totalPnl, count = 0, 0, 0
-		for order, def in Coins.List do
+		for order, def in Coins.all() do
 			local p = state.Positions[def.Ticker]
 			local coin = Market.coin(def.Ticker)
 			if not p or not coin then

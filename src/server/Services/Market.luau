@@ -37,6 +37,9 @@ end
 local bookProvider: (ticker: string) -> Types.BookDepth = function(_ticker: string)
 	return { Bids = {}, Asks = {} }
 end
+local launchProvider: (ticker: string) -> Types.LaunchInfo? = function(_ticker: string)
+	return nil
+end
 local recording = true
 
 function Market.now(): number
@@ -78,6 +81,29 @@ end
 
 function Market.setBookProvider(fn: (ticker: string) -> Types.BookDepth)
 	bookProvider = fn
+end
+
+function Market.setLaunchProvider(fn: (ticker: string) -> Types.LaunchInfo?)
+	launchProvider = fn
+end
+
+-- Dodaje coin z Pulse z podaną pulą. `initialPrice` to cena startowa (punkt odniesienia botów).
+function Market.addCoin(def: Coins.CoinDef, pool: Amm.Pool, launchedAt: number, initialPrice: number): CoinState
+	local state: CoinState = {
+		Def = def,
+		Pool = pool,
+		InitialPrice = initialPrice,
+		LaunchedAt = launchedAt,
+		Buckets = {},
+		Candles = {},
+		Trades = {},
+	}
+	states[def.Ticker] = state
+	return state
+end
+
+function Market.removeCoin(ticker: string)
+	states[ticker] = nil
 end
 
 -- Podczas rozgrzewki historia jest zapisywana, ale transakcje nie trafiają do broadcastu.
@@ -216,13 +242,18 @@ function Market.snapshot(): Types.MarketSnapshot
 		local candles = state.Candles
 		local last = candles[#candles]
 		local price = Amm.price(state.Pool)
+		local launch = launchProvider(ticker)
+		-- Coiny z Pulse nie mają sparkline'a w UI, więc nie wysyłamy go co sekundę.
 		local spark = {}
-		for i = math.max(1, #candles - Config.SparkPoints + 1), #candles do
-			table.insert(spark, candles[i].C)
+		if not launch then
+			for i = math.max(1, #candles - Config.SparkPoints + 1), #candles do
+				table.insert(spark, candles[i].C)
+			end
 		end
 		coins[ticker] = {
 			Ticker = ticker,
 			Book = bookProvider(ticker),
+			Launch = launch,
 			Price = price,
 			PoolRx = state.Pool.Rx,
 			PoolTokens = state.Pool.Tokens,
