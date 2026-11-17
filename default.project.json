@@ -72,7 +72,15 @@
 				"$path": "src/server"
 			}
 		},
+		"Players": {
+			"$properties": {
+				"CharacterAutoLoads": false
+			}
+		},
 		"StarterPlayer": {
+			"$properties": {
+				"EnableMouseLockOption": false
+			},
 			"StarterPlayerScripts": {
 				"Client": {
 					"$path": "src/client"

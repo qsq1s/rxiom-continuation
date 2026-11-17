@@ -23,6 +23,17 @@ local function ensurePart(className: string, name: string, size: Vector3, positi
 end
 
 function World.setup()
+	-- Gra to sam interfejs: gracze nie dostają postaci (nie chodzą, nie przełączają kamery).
+	-- Ustawione też w default.project.json; tu na wypadek starego pliku miejsca.
+	local Players = game:GetService("Players")
+	Players.CharacterAutoLoads = false
+	for _, player in Players:GetPlayers() do
+		if player.Character then
+			player.Character:Destroy()
+			player.Character = nil
+		end
+	end
+
 	local baseplate = ensurePart(
 		"Part",
 		"Baseplate",

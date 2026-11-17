@@ -1,6 +1,9 @@
 --!strict
 print("[RXIOM] Client script started")
 
+-- Od razu, zanim gra się załaduje: kursor nie może utknąć na środku ekranu.
+require(script.Cursor).start()
+
 -- Moduły z ReplicatedStorage mogą jeszcze nie dotrzeć do klienta w chwili startu skryptu.
 if not game:IsLoaded() then
 	game.Loaded:Wait()
