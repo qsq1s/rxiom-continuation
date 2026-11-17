@@ -30,7 +30,7 @@ local ROW_HOVER = Color3.fromHex("1F1F1F")
 
 export type Host = {
 	Root: Frame,
-	Lock: (title: string, path: string) -> (),
+	Lock: (path: string) -> (),
 	Unlock: () -> (),
 }
 
@@ -143,7 +143,7 @@ function Login.show(host: Host)
 	local connections: { RBXScriptConnection } = {}
 	local state: "idle" | "choosing" | "connecting" | "revealing" | "done" = "idle"
 
-	host.Lock("Login | RXIOM", "/login")
+	host.Lock("/login")
 
 	-- Cały ekran; jako przycisk, żeby kliknięcia nie przechodziły do strony pod spodem.
 	local screen: TextButton = create("TextButton", {

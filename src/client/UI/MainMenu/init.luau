@@ -52,22 +52,21 @@ local function hideDefaultCoreGui()
 	end)
 end
 
-local function pageInfo(page: Page): (string, string)
+local function pagePath(page: Page): string
 	if page.Name == "Coin" then
-		local ticker = page.Ticker or ""
-		return `{ticker} | RXIOM`, "/meme/" .. string.lower(ticker)
+		return "/meme/" .. string.lower(page.Ticker or "")
 	elseif page.Name == "Portfolio" then
-		return "Portfolio | RXIOM", "/portfolio"
+		return "/portfolio"
 	end
-	return "RXIOM", "/discover"
+	return "/discover"
 end
 
 export type Handle = {
 	Gui: ScreenGui,
 	-- Kontener strony rxiom.pro (pod przeglądarką, skalowany UIScale).
 	Root: Frame,
-	-- Pokazuje w przeglądarce podaną stronę i blokuje nawigację (ekran logowania).
-	Lock: (title: string, path: string) -> (),
+	-- Pokazuje w przeglądarce podaną ścieżkę i blokuje nawigację (ekran logowania).
+	Lock: (path: string) -> (),
 	Unlock: () -> (),
 }
 
@@ -135,8 +134,7 @@ function MainMenu.mount(): Handle
 		if locked then
 			return
 		end
-		local title, path = pageInfo(page)
-		browser.SetPage(title, path)
+		browser.SetPath(pagePath(page))
 		browser.SetHistory(position > 1, position < #history)
 	end
 
@@ -211,7 +209,7 @@ function MainMenu.mount(): Handle
 			return
 		end
 
-		-- Przeglądarka w pikselach ekranu; karta zaczyna się za przyciskami Robloxa.
+		-- Przeglądarka w pikselach ekranu; pasek adresu zaczyna się za przyciskami Robloxa.
 		local inset = GuiService.TopbarInset
 		local hasTopbar = inset.Width > 0
 		local chromeHeight =
@@ -234,9 +232,9 @@ function MainMenu.mount(): Handle
 	return {
 		Gui = gui,
 		Root = root,
-		Lock = function(title: string, path: string)
+		Lock = function(path: string)
 			locked = true
-			browser.SetPage(title, path)
+			browser.SetPath(path)
 			browser.SetHistory(false, false)
 		end,
 		Unlock = function()

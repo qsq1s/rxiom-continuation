@@ -1,5 +1,5 @@
 --!strict
--- Okno "przeglądarki", w którym gracz ogląda rxiom.pro: kompaktowy pasek kart i pasek adresu jak w Chrome.
+-- Okno "przeglądarki", w którym gracz ogląda rxiom.pro: sam pasek adresu jak w Chrome, bez kart.
 -- Rysowane w pikselach ekranu (bez UIScale). Przyciski Robloxa leżą na nim w lewym górnym rogu.
 
 local Icons = require(script.Parent.Icons)
@@ -10,10 +10,7 @@ local create = Util.create
 local Colors = Theme.Colors
 local Fonts = Theme.Fonts
 
-local STRIP_HEIGHT = 36
-local TAB_TOP = 6
 local TOOLBAR_HEIGHT = 38
-local TAB_WIDTH = 230
 
 export type Callbacks = {
 	Back: () -> (),
@@ -22,7 +19,8 @@ export type Callbacks = {
 
 export type Browser = {
 	Frame: Frame,
-	SetPage: (title: string, path: string) -> (),
+	-- Ścieżka strony, np. "/discover"; w pasku adresu poprzedzona domeną.
+	SetPath: (path: string) -> (),
 	SetHistory: (canBack: boolean, canForward: boolean) -> (),
 	-- `left`: gdzie kończą się przyciski Robloxa, `topbarHeight`: ich obszar w pionie (piksele ekranu).
 	-- Zwraca wysokość całego okna przeglądarki.
@@ -54,98 +52,15 @@ local function center(icon: Frame, parent: Instance)
 end
 
 function Browser.new(callbacks: Callbacks): Browser
-	local frame: Frame = create("Frame", {
-		Name = "Browser",
-		Size = UDim2.new(1, 0, 0, STRIP_HEIGHT + TOOLBAR_HEIGHT),
-		BackgroundColor3 = Colors.ChromeStrip,
-		BorderSizePixel = 0,
-		ZIndex = 10,
-	})
-
-	-- Pasek kart
-	local strip: Frame = create("Frame", {
-		Name = "Tabs",
-		BackgroundTransparency = 1,
-		Size = UDim2.new(1, 0, 0, STRIP_HEIGHT),
-		Parent = frame,
-	})
-	local stripPadding = Util.padding(TAB_TOP, 0, 0, 10) :: UIPadding
-	stripPadding.Parent = strip
-	local tabs = Util.group("List", 0, Util.hlist(4, Enum.VerticalAlignment.Bottom))
-	tabs.AutomaticSize = Enum.AutomaticSize.X
-	tabs.Size = UDim2.fromScale(0, 1)
-	tabs.Parent = strip
-
-	local tab: Frame = create("Frame", {
-		Name = "Tab",
-		Size = UDim2.new(0, TAB_WIDTH, 1, 0),
-		BackgroundColor3 = Colors.ChromeBar,
-		BorderSizePixel = 0,
-		LayoutOrder = 1,
-		Parent = tabs,
-	}, { Util.corner(8) })
-	-- Kwadratowe dolne rogi: karta przechodzi płynnie w pasek adresu.
-	create("Frame", {
-		Name = "Base",
-		AnchorPoint = Vector2.new(0, 1),
-		Position = UDim2.fromScale(0, 1),
-		Size = UDim2.new(1, 0, 0, 12),
-		BackgroundColor3 = Colors.ChromeBar,
-		BorderSizePixel = 0,
-		Parent = tab,
-	})
-	local tabContent = create("Frame", {
-		Name = "Content",
-		BackgroundTransparency = 1,
-		Size = UDim2.fromScale(1, 1),
-		ZIndex = 2,
-		Parent = tab,
-	}, { Util.padding(0, 10, 0, 12) })
-	local favicon = create("Frame", {
-		Name = "Favicon",
-		AnchorPoint = Vector2.new(0, 0.5),
-		Position = UDim2.fromScale(0, 0.5),
-		Size = UDim2.fromOffset(16, 16),
-		BackgroundColor3 = Colors.ChromeStrip,
-		Parent = tabContent,
-	}, { Util.corner(5) })
-	center(Icons.logo(8), favicon)
-	local title = Util.label({
-		Name = "Title",
-		Text = "RXIOM",
-		Size = 13,
-		Font = Fonts.Medium,
-		Position = UDim2.fromOffset(24, 0),
-		FrameSize = UDim2.new(1, -46, 1, 0),
-		Parent = tabContent,
-	})
-	local closeIcon = Icons.close(10, Colors.TextMuted)
-	closeIcon.AnchorPoint = Vector2.new(1, 0.5)
-	closeIcon.Position = UDim2.fromScale(1, 0.5)
-	closeIcon.Parent = tabContent
-
-	create("TextLabel", {
-		Name = "NewTab",
-		BackgroundTransparency = 1,
-		Size = UDim2.new(0, 28, 1, 0),
-		Text = "+",
-		TextSize = 18,
-		FontFace = Fonts.Regular,
-		TextColor3 = Colors.TextMuted,
-		LayoutOrder = 2,
-		Parent = tabs,
-	})
-
-	-- Pasek adresu na całą szerokość
+	-- Jeden pasek na całą szerokość: strzałki i pole adresu.
 	local toolbar: Frame = create("Frame", {
-		Name = "Toolbar",
-		AnchorPoint = Vector2.new(0, 1),
-		Position = UDim2.fromScale(0, 1),
+		Name = "Browser",
 		Size = UDim2.new(1, 0, 0, TOOLBAR_HEIGHT),
 		BackgroundColor3 = Colors.ChromeBar,
 		BorderSizePixel = 0,
-		Parent = frame,
+		ZIndex = 10,
 	})
+	local frame = toolbar
 	local divider = Util.divider(false, nil, true)
 	divider.AnchorPoint = Vector2.new(0, 1)
 	divider.Position = UDim2.fromScale(0, 1)
@@ -167,8 +82,8 @@ function Browser.new(callbacks: Callbacks): Browser
 	local address: Frame = create("Frame", {
 		Name = "Address",
 		AnchorPoint = Vector2.new(0, 0.5),
-		Position = UDim2.new(0, 72, 0.5, 0),
-		Size = UDim2.new(1, -80, 0, 28),
+		Position = UDim2.new(0, 76, 0.5, 0),
+		Size = UDim2.new(1, -84, 0, 32),
 		BackgroundColor3 = Colors.ChromeField,
 		Parent = toolbar,
 	}, { Util.round(), Util.padding(0, 16) })
@@ -205,8 +120,7 @@ function Browser.new(callbacks: Callbacks): Browser
 
 	return {
 		Frame = frame,
-		SetPage = function(pageTitle: string, path: string)
-			title.Text = pageTitle
+		SetPath = function(path: string)
 			url.Text = `<font color="#FFFFFF">{Theme.Site}</font>{path}`
 		end,
 		SetHistory = function(canBack: boolean, canForward: boolean)
@@ -215,17 +129,17 @@ function Browser.new(callbacks: Callbacks): Browser
 			backButton.Active = canBack
 			forwardButton.Active = canForward
 		end,
-		-- Kompaktowe paski jak w Chrome; przyciski Robloxa mogą na nie nachodzić w lewym górnym rogu,
-		-- więc karta i zawartość paska adresu (jeśli przyciski sięgają tak nisko) zaczynają się za nimi.
+		-- Pasek jest co najmniej tak wysoki jak przyciski Robloxa, które leżą w jego lewym górnym rogu,
+		-- więc strzałki i pole adresu zaczynają się za nimi.
 		Layout = function(left: number, topbarHeight: number): number
-			local contentLeft = math.max(10, math.ceil(left))
-			stripPadding.PaddingLeft = UDim.new(0, contentLeft)
-			local toolbarLeft = if topbarHeight > STRIP_HEIGHT then contentLeft else 10
+			local height = math.max(TOOLBAR_HEIGHT, math.ceil(topbarHeight))
+			local toolbarLeft = math.max(10, math.ceil(left))
+			frame.Size = UDim2.new(1, 0, 0, height)
 			nav.Position = UDim2.new(0, toolbarLeft, 0.5, 0)
-			-- Dwa przyciski po 28 px z odstępem 4 px, potem 2 px przerwy przed polem adresu.
-			address.Position = UDim2.new(0, toolbarLeft + 62, 0.5, 0)
-			address.Size = UDim2.new(1, -(toolbarLeft + 70), 0, 28)
-			return STRIP_HEIGHT + TOOLBAR_HEIGHT
+			-- Dwa przyciski po 28 px z odstępem 4 px, potem 6 px przerwy przed polem adresu.
+			address.Position = UDim2.new(0, toolbarLeft + 66, 0.5, 0)
+			address.Size = UDim2.new(1, -(toolbarLeft + 74), 0, 32)
+			return height
 		end,
 	}
 end
