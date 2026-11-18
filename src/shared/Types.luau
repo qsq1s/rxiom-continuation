@@ -208,6 +208,8 @@ export type RecipientInfo = {
 	DisplayName: string?,
 	Wallet: string?,
 	Online: boolean?,
+	-- Odbiorcą jest sam gracz (podgląd animacji, bez przesuwania RXI).
+	Self: boolean?,
 }
 
 -- Powiadomienie odbiorcy o przelewie.
@@ -221,6 +223,8 @@ export type ActionResult = {
 	Ticker: string?,
 	-- Przelewy: komu wysłano (nazwa albo skrócony adres).
 	To: string?,
+	-- Przelew do siebie: tylko podgląd, saldo bez zmian.
+	Self: boolean?,
 }
 
 export type Notice = { Kind: "Success" | "Error" | "Info", Text: string }

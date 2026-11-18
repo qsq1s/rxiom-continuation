@@ -64,6 +64,7 @@ Przycisk **Send** obok Deposit (`src/server/Services/Transfer.luau`, okno w `Mai
 - Przelew trafia do skrzynki odbiorcy w DataStore (`RXIOM_Inbox_v1`) i jest księgowany od razu (ten sam serwer), po powiadomieniu MessagingService (inny serwer) albo przy następnym wejściu. Adresy portfeli są indeksowane w `RXIOM_Wallets_v1`. Zaksięgowane ID przelewów są w profilu, więc nic nie jest liczone dwa razy.
 - Po wysłaniu i po otrzymaniu na środku ekranu kręci się moneta RXI (grafika `126450260339769`) z kwotą i nadawcą/odbiorcą.
 - W Studio bez dostępu do API przelewy działają tylko między graczami na tym samym serwerze (np. **Test → Clients and Servers**, 2 graczy).
+- Przelew do siebie (własny nick albo adres) to podgląd: pokazuje animację „Sent”, a po niej „Received”, ale saldo się nie zmienia.
 
 ## Struktura
 

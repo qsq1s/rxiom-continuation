@@ -22,10 +22,13 @@ export type Options = {
 	Title: string,
 	Amount: number,
 	Line: string,
+	-- Po zamknięciu przez gracza albo automatycznie (nie gdy zastąpi ją inna animacja).
+	OnClosed: (() -> ())?,
 }
 
 local CoinBurst = {}
 
+-- Zamyka bieżącą animację bez OnClosed (gdy zastępuje ją nowa).
 local current: (() -> ())? = nil
 
 local function tween(instance: Instance, seconds: number, props: { [string]: any }, style: Enum.EasingStyle?, direction: Enum.EasingDirection?, delay: number?)
@@ -246,9 +249,19 @@ function CoinBurst.play(parent: GuiObject, options: Options)
 		end)
 	end
 	current = close
-	overlay.Activated:Connect(close)
-	done.Activated:Connect(close)
-	task.delay(AUTO_CLOSE, close)
+	-- Zamknięcie przez gracza albo czas: dopiero wtedy OnClosed, gdy ta animacja już zniknie.
+	local function dismiss()
+		if closed then
+			return
+		end
+		close()
+		if options.OnClosed then
+			task.delay(0.35, options.OnClosed)
+		end
+	end
+	overlay.Activated:Connect(dismiss)
+	done.Activated:Connect(dismiss)
+	task.delay(AUTO_CLOSE, dismiss)
 end
 
 return CoinBurst

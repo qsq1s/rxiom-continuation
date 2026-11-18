@@ -283,7 +283,10 @@ function SendPanel.new(parent: GuiObject): SendPanel
 				if info.Wallet then
 					sub ..= "  ·  " .. shortWallet(info.Wallet)
 				end
-				sub ..= if info.Online then "  ·  online now" else "  ·  gets it next time they play"
+				sub ..= if info.Self
+					then "  ·  that's you (preview, no RXI moves)"
+					elseif info.Online then "  ·  online now"
+					else "  ·  gets it next time they play"
 				previewSub.Text = sub
 			else
 				previewName.Text = shortWallet(info.Wallet or "")
@@ -396,10 +399,17 @@ function SendPanel.new(parent: GuiObject): SendPanel
 			hide()
 			toInput.Text = ""
 			amountInput.Text = ""
+			local sent = result.Rx or value
 			CoinBurst.play(parent, {
 				Title = "Sent",
-				Amount = result.Rx or value,
+				Amount = sent,
 				Line = `to {result.To or "recipient"}`,
+				-- Do siebie: po "Sent" od razu pokaz drugiej animacji, którą widzi odbiorca.
+				OnClosed = if result.Self
+					then function()
+						CoinBurst.play(parent, { Title = "Received", Amount = sent, Line = "from yourself" })
+					end
+					else nil,
 			})
 		end)
 	end

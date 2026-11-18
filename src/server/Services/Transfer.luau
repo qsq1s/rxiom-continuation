@@ -175,8 +175,9 @@ local function resolve(sender: Player, query: any): (Target?, string?)
 	end
 
 	local found = target :: Target
+	-- Przelew do siebie jest tylko podglądem animacji (nic się nie przesuwa), więc nazwa zawsze widoczna.
 	if found.UserId == sender.UserId then
-		return nil, "You can't send RXI to yourself"
+		found.ShowName = true
 	end
 	return found, nil
 end
@@ -307,6 +308,7 @@ local function findRecipient(sender: Player, query: any): Types.RecipientInfo
 			DisplayName = target.DisplayName,
 			Wallet = target.Wallet,
 			Online = target.Player ~= nil,
+			Self = target.UserId == sender.UserId,
 		}
 	end
 	return { Ok = true, Wallet = target.Wallet }
@@ -340,6 +342,9 @@ local function send(sender: Player, request: any): ActionResult
 	-- Saldo mogło się zmienić podczas szukania odbiorcy.
 	if amount > profile.Balance + 1e-9 then
 		return fail("Insufficient balance")
+	end
+	if target.UserId == sender.UserId then
+		return { Ok = true, Rx = amount, To = "yourself", Self = true }
 	end
 
 	profile.Balance = math.max(0, profile.Balance - amount)
