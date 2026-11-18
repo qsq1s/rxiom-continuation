@@ -94,7 +94,7 @@ local function sanitizeOrder(o: any): Types.BookOrder?
 	end
 	return {
 		Id = o.Id,
-		Ticker = o.Ticker,
+		Ticker = Coins.rename(o.Ticker),
 		Side = o.Side,
 		Price = o.Price,
 		Tokens = math.max(0, o.Tokens),
@@ -142,7 +142,8 @@ local function sanitize(data: any): Profile
 		end
 	end
 	if typeof(data.Positions) == "table" then
-		for ticker, p in data.Positions do
+		for saved, p in data.Positions do
+			local ticker = if typeof(saved) == "string" then Coins.rename(saved) else saved
 			-- Coiny z Pulse mogą nie być jeszcze aktywne na tym serwerze, więc liczy się tylko format.
 			if
 				Coins.validTicker(ticker)
@@ -170,7 +171,7 @@ local function sanitize(data: any): Profile
 				while #fills > Config.MaxFills do
 					table.remove(fills, 1)
 				end
-				profile.Positions[ticker] = {
+				local position: Types.Position = {
 					Tokens = p.Tokens,
 					BoughtRx = p.BoughtRx,
 					SoldRx = p.SoldRx,
@@ -178,6 +179,17 @@ local function sanitize(data: any): Profile
 					BuyValue = if finite(p.BuyValue) then p.BuyValue else 0,
 					Fills = fills,
 				}
+				-- Dwa zapisane klucze mogą wskazywać ten sam coin po zmianie nazwy: sumujemy.
+				local existing = profile.Positions[ticker]
+				if existing then
+					existing.Tokens += position.Tokens
+					existing.BoughtRx += position.BoughtRx
+					existing.SoldRx += position.SoldRx
+					existing.BuyTokens += position.BuyTokens
+					existing.BuyValue += position.BuyValue
+				else
+					profile.Positions[ticker] = position
+				end
 			end
 		end
 	end

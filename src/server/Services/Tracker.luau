@@ -13,6 +13,7 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local UserService = game:GetService("UserService")
 
+local Coins = require(ReplicatedStorage.Shared.Coins)
 local Remotes = require(ReplicatedStorage.Shared.Remotes)
 local Types = require(ReplicatedStorage.Shared.Types)
 local PlayerData = require(script.Parent.PlayerData)
@@ -154,9 +155,14 @@ local function sanitizeRecord(userId: number, raw: any): Record?
 	if typeof(raw.Favorites) == "table" then
 		for _, f in raw.Favorites do
 			if typeof(f) == "table" and typeof(f.Ticker) == "string" and finite(f.Volume) and #favorites < FAVORITES then
+				local ticker = Coins.rename(f.Ticker)
+				local renamed = if ticker ~= f.Ticker then Coins.get(ticker) else nil
 				table.insert(favorites, {
-					Ticker = string.sub(f.Ticker, 1, 8),
-					Name = if typeof(f.Name) == "string" then string.sub(f.Name, 1, 24) else nil,
+					Ticker = string.sub(ticker, 1, 8),
+					Name = if renamed
+						then renamed.Name
+						elseif typeof(f.Name) == "string" then string.sub(f.Name, 1, 24)
+						else nil,
 					Volume = f.Volume,
 				})
 			end

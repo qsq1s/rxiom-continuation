@@ -153,8 +153,14 @@ function CoinView.new(onBack: () -> ()): CoinView
 	titleRow.Parent = names
 	local tickerLabel = Util.text({ Text = "", Size = 22, Font = Fonts.Bold, Order = 1, Parent = titleRow })
 	local nameLabel = Util.text({ Text = "", Size = 16, Color = Colors.TextMuted, Order = 2, Parent = titleRow })
+	local subRow = Util.group("Sub", 2, Util.hlist(10, Enum.VerticalAlignment.Center))
+	subRow.Parent = names
 	local ageLabel =
-		Util.text({ Text = "", Size = 14, Font = Fonts.SemiBold, Color = Colors.Green, Order = 2, Parent = names })
+		Util.text({ Text = "", Size = 14, Font = Fonts.SemiBold, Color = Colors.Green, Order = 1, Parent = subRow })
+	-- Opis coina ze stałej listy; ucięty, żeby nie wchodził pod statystyki po prawej.
+	local descLabel = Util.text({ Text = "", Size = 14, Color = Colors.TextMuted, Order = 2, Parent = subRow })
+	descLabel.TextTruncate = Enum.TextTruncate.AtEnd
+	create("UISizeConstraint", { MaxSize = Vector2.new(360, math.huge), Parent = descLabel })
 
 	local stats = Util.group("Stats", 0, Util.hlist(36, nil, Enum.HorizontalAlignment.Right))
 	stats.AnchorPoint = Vector2.new(1, 0.5)
@@ -526,6 +532,8 @@ function CoinView.new(onBack: () -> ()): CoinView
 			ticker = newTicker
 			tickerLabel.Text = def.Ticker
 			nameLabel.Text = def.Name
+			descLabel.Text = def.Description or ""
+			descLabel.Visible = def.Description ~= nil
 			for _, child in iconSlot:GetChildren() do
 				child:Destroy()
 			end

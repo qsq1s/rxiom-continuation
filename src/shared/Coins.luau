@@ -16,6 +16,8 @@ export type CoinDef = {
 	Activity: number,
 	-- Tylko coiny z Pulse: nazwa gracza, który go stworzył.
 	Creator: string?,
+	-- Tylko stała lista: krótki opis na stronie coina.
+	Description: string?,
 }
 
 local MINUTE, DAY = 60, 86400
@@ -28,7 +30,8 @@ local function coin(
 	marketCap: number,
 	liquidity: number,
 	holders: number,
-	activity: number
+	activity: number,
+	description: string
 ): CoinDef
 	return table.freeze({
 		Ticker = ticker,
@@ -39,19 +42,37 @@ local function coin(
 		Liquidity = liquidity,
 		Holders = holders,
 		Activity = activity,
+		Description = description,
 	})
 end
 
--- Nazwy to zaślepki do podmiany na docelową listę.
+-- Kolejność jak na liście (Discover, dolny pasek). Coiny z dawnymi zaślepkami COIN1-COIN8 mają ich
+-- parametry, więc zapisane pozycje przenoszą się bez zmiany wartości (zob. Coins.rename).
 local List: { CoinDef } = {
-	coin("COIN1", "Placeholder One", "F5C542", 38 * MINUTE, 117_000, 14_200, 1082, 1.4),
-	coin("COIN2", "Placeholder Two", "526FFF", 10 * MINUTE, 30_300, 7_030, 200, 1.1),
-	coin("COIN3", "Placeholder Three", "2FE3AC", 22 * DAY, 14_500_000, 213_000, 31281, 0.8),
-	coin("COIN4", "Placeholder Four", "EC397A", 1 * MINUTE, 14_000, 3_540, 237, 1.6),
-	coin("COIN5", "Placeholder Five", "A855F7", 90 * DAY, 12_400_000, 241_000, 80492, 0.6),
-	coin("COIN6", "Placeholder Six", "F7931A", 4 * MINUTE, 26_800, 5_790, 386, 1.8),
-	coin("COIN7", "Placeholder Seven", "38BDF8", 2 * MINUTE, 9_600, 2_550, 226, 1.2),
-	coin("COIN8", "Placeholder Eight", "84CC16", 3 * MINUTE, 11_900, 3_100, 150, 1.0),
+	coin("ROXI", "Roxi", "A855F7", 22 * DAY, 14_500_000, 213_000, 31281, 0.8, "Maskotka ekosystemu RXIOM"),
+	coin("BLOKI", "Blocki", "F7931A", 2 * DAY, 480_000, 41_000, 2940, 1.0, "Coin inspirowany blokowym światem Roblox"),
+	coin("NOOB", "Noobium", "F5C542", 38 * MINUTE, 117_000, 14_200, 1082, 1.4, "Memecoin z motywem klasycznego Nooba"),
+	coin("RUGB", "Rugby", "EF4444", 10 * MINUTE, 30_300, 7_030, 200, 1.1, "Żart z rug pullów, ale jako sympatyczna maskotka"),
+	coin("BLOX", "Bloxor", "38BDF8", 7 * DAY, 2_100_000, 96_000, 9850, 0.9, "Futurystyczny coin z blokowym motywem"),
+	coin("RIXI", "Rixie", "EC4899", 2 * MINUTE, 9_600, 2_550, 226, 1.2, "Mały, stylowy coin powiązany z RXI"),
+	coin("STUD", "Studz", "94A3B8", 3 * MINUTE, 11_900, 3_100, 150, 1.0, "Inspiracja charakterystycznymi studami Roblox"),
+	coin("MBLOX", "Moonblox", "526FFF", 15 * MINUTE, 64_000, 9_800, 512, 1.5, "Coin z motywem kosmosu i moonshotów"),
+	coin("RXT", "RXT", "2FE3AC", 90 * DAY, 12_400_000, 241_000, 80492, 0.6, "Token wyglądający jak poważny coin tradingowy"),
+	coin("NBC", "NoobCash", "84CC16", 4 * MINUTE, 26_800, 5_790, 386, 1.8, "Humorystyczny coin z motywem noobów"),
+	coin("PXR", "PixelR", "D946EF", 1 * MINUTE, 14_000, 3_540, 237, 1.6, "Pixel-artowy coin inspirowany Robloxem"),
+	coin("RPRIME", "Roxi Prime", "C4B5FD", 45 * DAY, 6_200_000, 158_000, 6120, 0.5, "Ekskluzywny, premium coin w ekosystemie RXIOM"),
+}
+
+-- Dawne tickery -> obecne. Stosowane przy wczytywaniu zapisanych profili.
+local RENAMED: { [string]: string } = {
+	COIN1 = "NOOB",
+	COIN2 = "RUGB",
+	COIN3 = "ROXI",
+	COIN4 = "PXR",
+	COIN5 = "RXT",
+	COIN6 = "NBC",
+	COIN7 = "RIXI",
+	COIN8 = "STUD",
 }
 
 local ByTicker: { [string]: CoinDef } = {}
@@ -78,6 +99,11 @@ end
 
 function Coins.unregister(ticker: string)
 	launched[ticker] = nil
+end
+
+-- Obecny ticker dla tickera z zapisu (dawne zaślepki COIN1-COIN8 zmieniły nazwy).
+function Coins.rename(ticker: string): string
+	return RENAMED[ticker] or ticker
 end
 
 -- Wszystkie znane coiny: najpierw stała lista, potem coiny z Pulse alfabetycznie.

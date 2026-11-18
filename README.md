@@ -23,7 +23,7 @@ Zapis postępu (DataStore) działa w opublikowanej grze. W Studio trzeba włącz
 - **Deposit** daje darmowe RXI co 5 minut.
 - Przy wejściu gracz loguje się przez portfel **Ghostbox** (wybiera swoje konto Roblox). Przy pierwszym logowaniu dostaje stały adres portfela z 24 znaków, zapisywany w profilu.
 
-Ustawienia ekonomii są w `src/shared/Config.luau`, a lista coinów w `src/shared/Coins.luau`.
+Ustawienia ekonomii są w `src/shared/Config.luau`, a lista coinów w `src/shared/Coins.luau` (12 coinów: ROXI, BLOKI, NOOB, RUGB, BLOX, RIXI, STUD, MBLOX, RXT, NBC, PXR, RPRIME, z opisem na stronie coina). Dawne tickery COIN1–COIN8 są przy wczytywaniu zapisu zamieniane na nowe (`Coins.rename`), więc pozycje graczy zostają.
 
 ## Księga zleceń (order book)
 

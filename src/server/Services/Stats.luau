@@ -104,14 +104,16 @@ function Stats.sanitize(raw: any, positions: { [string]: Types.Position }, order
 		stats.Trades = if finite(raw.Trades) then math.max(0, math.floor(raw.Trades)) else 0
 		stats.Realized = if finite(raw.Realized) then raw.Realized else 0
 		if typeof(raw.TokenVolume) == "table" then
-			for ticker, volume in raw.TokenVolume do
+			for saved, volume in raw.TokenVolume do
+				local ticker = if typeof(saved) == "string" then Coins.rename(saved) else saved
 				if Coins.validTicker(ticker) and finite(volume) and volume > 0 then
-					stats.TokenVolume[ticker] = volume
+					stats.TokenVolume[ticker] = (stats.TokenVolume[ticker] or 0) + volume
 				end
 			end
 		end
 		if typeof(raw.Basis) == "table" then
-			for ticker, b in raw.Basis do
+			for saved, b in raw.Basis do
+				local ticker = if typeof(saved) == "string" then Coins.rename(saved) else saved
 				if
 					Coins.validTicker(ticker)
 					and typeof(b) == "table"
@@ -119,7 +121,11 @@ function Stats.sanitize(raw: any, positions: { [string]: Types.Position }, order
 					and finite(b.Cost)
 					and b.Tokens > Config.DustTokens
 				then
-					stats.Basis[ticker] = { Tokens = b.Tokens, Cost = math.max(0, b.Cost) }
+					local prev = stats.Basis[ticker]
+					stats.Basis[ticker] = {
+						Tokens = b.Tokens + (if prev then prev.Tokens else 0),
+						Cost = math.max(0, b.Cost) + (if prev then prev.Cost else 0),
+					}
 				end
 			end
 		end
