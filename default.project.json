@@ -58,6 +58,7 @@
 				"MarketSnapshot": { "$className": "RemoteEvent" },
 				"PortfolioChanged": { "$className": "RemoteEvent" },
 				"Notify": { "$className": "RemoteEvent" },
+				"TransferReceived": { "$className": "RemoteEvent" },
 				"GetInitialState": { "$className": "RemoteFunction" },
 				"Login": { "$className": "RemoteFunction" },
 				"GetCandles": { "$className": "RemoteFunction" },
@@ -69,7 +70,9 @@
 				"SearchWallets": { "$className": "RemoteFunction" },
 				"GetWalletProfile": { "$className": "RemoteFunction" },
 				"GetLeaderboard": { "$className": "RemoteFunction" },
-				"SetProfilePublic": { "$className": "RemoteFunction" }
+				"SetProfilePublic": { "$className": "RemoteFunction" },
+				"FindRecipient": { "$className": "RemoteFunction" },
+				"SendRxi": { "$className": "RemoteFunction" }
 			}
 		},
 		"ServerScriptService": {

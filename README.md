@@ -56,6 +56,15 @@ Zakładka **Trackers** (`src/server/Services/Tracker.luau`, statystyki w `Stats.
 - **Prywatność**: każdy profil jest domyślnie prywatny i gracz sam go upublicznia przełącznikiem w „Your profile”. Prywatny profil nie pokazuje żadnych liczb ani adresu portfela, nie da się go znaleźć po adresie, nie ma go w rankingu, a w listach transakcji gracz widnieje pod anonimowym adresem. Saldo i pozycje nigdy nie są publikowane osobno, tylko łączna wartość portfela.
 - Publiczne dane są zapisywane w DataStore (`RXIOM_Public_v1`, ranking w OrderedDataStore `RXIOM_Leaderboard_v1`) co minutę i przy wyjściu, żeby było je widać, gdy gracz jest offline. Przejście na prywatny od razu je usuwa.
 
+## Przelewy RXI
+
+Przycisk **Send** obok Deposit (`src/server/Services/Transfer.luau`, okno w `MainMenu/SendPanel.luau`, animacja w `UI/CoinBurst.luau`):
+
+- Odbiorca po nazwie użytkownika Roblox, nazwie wyświetlanej gracza na serwerze albo adresie portfela Ghostbox; podgląd odbiorcy na żywo. Po samym adresie prywatnego portfela nie widać, czyj jest. Bez opłat, minimum jak przy handlu.
+- Przelew trafia do skrzynki odbiorcy w DataStore (`RXIOM_Inbox_v1`) i jest księgowany od razu (ten sam serwer), po powiadomieniu MessagingService (inny serwer) albo przy następnym wejściu. Adresy portfeli są indeksowane w `RXIOM_Wallets_v1`. Zaksięgowane ID przelewów są w profilu, więc nic nie jest liczone dwa razy.
+- Po wysłaniu i po otrzymaniu na środku ekranu kręci się moneta RXI (grafika `126450260339769`) z kwotą i nadawcą/odbiorcą.
+- W Studio bez dostępu do API przelewy działają tylko między graczami na tym samym serwerze (np. **Test → Clients and Servers**, 2 graczy).
+
 ## Struktura
 
 | Folder                    | Trafia do                                   | Co zawiera                                       |

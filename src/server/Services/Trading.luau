@@ -16,6 +16,7 @@ local Market = require(script.Parent.Market)
 local OrderBook = require(script.Parent.OrderBook)
 local PlayerData = require(script.Parent.PlayerData)
 local Tracker = require(script.Parent.Tracker)
+local Transfer = require(script.Parent.Transfer)
 
 type Profile = PlayerData.Profile
 type TriggerOrder = Types.TriggerOrder
@@ -597,6 +598,7 @@ function Trading.start()
 	OrderBook.setFillHandler(onMakerFill)
 	Launchpad.start(pushPortfolio)
 	Tracker.start(Trading.portfolioValue, pushPortfolio)
+	Transfer.start(pushPortfolio)
 
 	Remotes.SubmitTrade.OnServerInvoke = submitTrade
 	Remotes.PlaceLimitOrder.OnServerInvoke = placeLimitOrder
@@ -611,6 +613,7 @@ function Trading.start()
 			return { Ok = false, Error = "Your data is still loading, try again" }
 		end
 		local wallet, isNew = PlayerData.ensureWallet(profile)
+		task.spawn(Transfer.indexWallet, player, wallet)
 		pushPortfolio(player)
 		return { Ok = true, Wallet = wallet, New = isNew }
 	end
@@ -633,6 +636,7 @@ function Trading.start()
 		recentActions[player] = nil
 		-- Publiczne statystyki przed zapisem profilu (wartość portfela liczona z jeszcze wczytanego).
 		Tracker.release(player)
+		Transfer.release(player)
 		PlayerData.release(player)
 	end)
 	game:BindToClose(function()

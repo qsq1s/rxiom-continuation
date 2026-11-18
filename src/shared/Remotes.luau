@@ -18,6 +18,7 @@ return table.freeze({
 	MarketSnapshot = event("MarketSnapshot"), -- (MarketSnapshot)
 	PortfolioChanged = event("PortfolioChanged"), -- (PortfolioState)
 	Notify = event("Notify"), -- (Notice)
+	TransferReceived = event("TransferReceived"), -- (TransferNotice)
 
 	-- klient -> serwer
 	GetInitialState = func("GetInitialState"), -- () -> InitialState
@@ -33,4 +34,6 @@ return table.freeze({
 	GetWalletProfile = func("GetWalletProfile"), -- (userId) -> WalletProfile?
 	GetLeaderboard = func("GetLeaderboard"), -- () -> { LeaderboardEntry }
 	SetProfilePublic = func("SetProfilePublic"), -- (boolean) -> ActionResult
+	FindRecipient = func("FindRecipient"), -- (query) -> RecipientInfo
+	SendRxi = func("SendRxi"), -- (TransferRequest) -> ActionResult (z To)
 })

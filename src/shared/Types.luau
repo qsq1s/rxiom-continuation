@@ -195,12 +195,32 @@ export type CreateCoinRequest = {
 	Color: number,
 }
 
+-- Przelew RXI: To to nazwa użytkownika Roblox albo adres portfela Ghostbox.
+export type TransferRequest = { To: string, Amount: number }
+
+-- Podgląd odbiorcy. Nazwy i UserId są tylko wtedy, gdy nie zdradzają prywatnego gracza
+-- (wpisana nazwa albo publiczny profil); dla samego adresu prywatnego portfela jest tylko Wallet.
+export type RecipientInfo = {
+	Ok: boolean,
+	Error: string?,
+	UserId: number?,
+	Name: string?,
+	DisplayName: string?,
+	Wallet: string?,
+	Online: boolean?,
+}
+
+-- Powiadomienie odbiorcy o przelewie.
+export type TransferNotice = { Amount: number, From: string }
+
 export type ActionResult = {
 	Ok: boolean,
 	Error: string?,
 	Rx: number?,
 	Tokens: number?,
 	Ticker: string?,
+	-- Przelewy: komu wysłano (nazwa albo skrócony adres).
+	To: string?,
 }
 
 export type Notice = { Kind: "Success" | "Error" | "Info", Text: string }

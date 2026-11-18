@@ -23,6 +23,8 @@ export type Profile = {
 	-- Czy statystyki są widoczne w Wallet Trackerze. Domyślnie nie: gracz musi sam się zgodzić.
 	Public: boolean,
 	Stats: Types.TradeStats,
+	-- ID ostatnio zaksięgowanych przelewów przychodzących (ochrona przed podwójnym zaksięgowaniem).
+	Received: { string },
 }
 
 local WALLET_ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
@@ -35,9 +37,12 @@ end
 
 local STORE_NAME = "RXIOM_Profiles_v1"
 local AUTOSAVE_SECONDS = 60
+-- Ile ID zaksięgowanych przelewów trzymać w profilu.
+local MAX_RECEIVED = 200
 
 local PlayerData = {}
 PlayerData.Loaded = Signal.new() -- (player)
+PlayerData.MaxReceived = MAX_RECEIVED
 
 local profiles: { [Player]: Profile } = {}
 -- Profil, którego nie udało się wczytać, nie jest zapisywany, żeby nie nadpisać prawdziwych danych.
@@ -69,6 +74,7 @@ local function defaultProfile(): Profile
 		FaucetReadyAt = 0,
 		Public = false,
 		Stats = Stats.empty(),
+		Received = {},
 	}
 end
 
@@ -110,7 +116,15 @@ local function sanitize(data: any): Profile
 		Wallet = if isWallet(data.Wallet) then data.Wallet else nil,
 		Public = data.Public == true,
 		Stats = Stats.empty(),
+		Received = {},
 	}
+	if typeof(data.Received) == "table" then
+		for _, id in data.Received do
+			if typeof(id) == "string" and #id <= 64 and #profile.Received < MAX_RECEIVED then
+				table.insert(profile.Received, id)
+			end
+		end
+	end
 	local orderTickers: { [string]: boolean } = {}
 	if typeof(data.Orders) == "table" then
 		for _, o in data.Orders do
@@ -199,10 +213,10 @@ local function load(player: Player)
 	PlayerData.Loaded:Fire(player)
 end
 
-local function save(player: Player)
+local function save(player: Player): boolean
 	local profile = profiles[player]
 	if not profile or not saveable[player] or not store then
-		return
+		return false
 	end
 	local payload = {
 		Balance = profile.Balance,
@@ -212,6 +226,7 @@ local function save(player: Player)
 		Wallet = profile.Wallet,
 		Public = profile.Public,
 		Stats = profile.Stats,
+		Received = profile.Received,
 	}
 	local ok, err = pcall(store.UpdateAsync, store, key(player), function()
 		return payload
@@ -219,6 +234,30 @@ local function save(player: Player)
 	if not ok then
 		warn(`[RXIOM] Failed to save data for {player.Name}:`, err)
 	end
+	return ok
+end
+
+-- Zapisuje profil od razu (np. po przelewie). Zwraca true, gdy zapis się udał.
+function PlayerData.saveNow(player: Player): boolean
+	return save(player)
+end
+
+-- Czy profile są w ogóle zapisywane (false np. w Studio bez dostępu do API).
+function PlayerData.persistent(): boolean
+	return store ~= nil
+end
+
+-- Czy gracz ma zapisany profil RXIOM. nil, gdy nie da się tego sprawdzić.
+function PlayerData.exists(userId: number): boolean?
+	local current = store
+	if not current then
+		return nil
+	end
+	local ok, data = pcall(current.GetAsync, current, "u_" .. userId)
+	if not ok then
+		return nil
+	end
+	return data ~= nil
 end
 
 function PlayerData.get(player: Player): Profile?

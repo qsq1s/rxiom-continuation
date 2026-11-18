@@ -29,6 +29,8 @@ export type Navigation = {
 	Pulse: () -> (),
 	Trackers: () -> (),
 	Portfolio: () -> (),
+	-- Otwiera okno przelewu RXI.
+	Send: () -> (),
 }
 
 local TopBar = {}
@@ -115,7 +117,7 @@ local function avatar(): ImageLabel
 		Name = "Avatar",
 		Size = UDim2.fromOffset(36, 36),
 		BackgroundColor3 = Colors.Elevated,
-		LayoutOrder = 5,
+		LayoutOrder = 6,
 	}, { Util.round() })
 	task.spawn(function()
 		local ok, content = pcall(
@@ -249,7 +251,17 @@ function TopBar.new(nav: Navigation): TopBar
 	deposit.Parent = right
 	deposit.Activated:Connect(Actions.claimFaucet)
 
-	local favorites = pillButton("Favorites", 3, 40)
+	-- Przelew RXI do innego gracza.
+	local send = pillButton("Send", 3)
+	Util.padding(0, 16, 0, 14).Parent = send
+	Util.hlist(8).Parent = send
+	Icons.arrow(16, Colors.Text, "Right", 2).Parent = send
+	Util.text({ Text = "Send", Size = 16, Font = Fonts.SemiBold, Order = 1, Parent = send })
+	Util.hoverBackground(send, Colors.Elevated, Colors.Border)
+	send.Parent = right
+	send.Activated:Connect(nav.Send)
+
+	local favorites = pillButton("Favorites", 4, 40)
 	local star = Icons.star(18, Colors.Text)
 	star.AnchorPoint = Vector2.new(0.5, 0.5)
 	star.Position = UDim2.fromScale(0.5, 0.5)
@@ -260,7 +272,7 @@ function TopBar.new(nav: Navigation): TopBar
 		Toast.show("Favorites are coming soon", "Info")
 	end)
 
-	local wallet = pillButton("Wallet", 4)
+	local wallet = pillButton("Wallet", 5)
 	Util.padding(0, 14).Parent = wallet
 	Util.hlist(8).Parent = wallet
 	Icons.wallet(16, Colors.Text, 1).Parent = wallet

@@ -7,8 +7,11 @@ local Players = game:GetService("Players")
 local StarterGui = game:GetService("StarterGui")
 local TextChatService = game:GetService("TextChatService")
 
+local Remotes = require(game:GetService("ReplicatedStorage").Shared.Remotes)
+
 local UI = script.Parent
 local Browser = require(UI.Browser)
+local CoinBurst = require(UI.CoinBurst)
 local Theme = require(UI.Theme)
 local Toast = require(UI.Toast)
 local Util = require(UI.Util)
@@ -18,6 +21,7 @@ local CoinView = require(script.CoinView)
 local DiscoverPage = require(script.DiscoverPage)
 local PortfolioPage = require(script.PortfolioPage)
 local PulsePage = require(script.PulsePage)
+local SendPanel = require(script.SendPanel)
 local TrackerPage = require(script.TrackerPage)
 local TopBar = require(script.TopBar)
 
@@ -128,6 +132,7 @@ function MainMenu.mount(): Handle
 	local portfolioPage: PortfolioPage.PortfolioPage
 	local pulsePage: PulsePage.PulsePage
 	local trackerPage: TrackerPage.TrackerPage
+	local sendPanel: SendPanel.SendPanel
 
 	local function render(page: Page)
 		for name, frame in pages do
@@ -183,6 +188,11 @@ function MainMenu.mount(): Handle
 		Portfolio = function()
 			navigate({ Name = "Portfolio" })
 		end,
+		Send = function()
+			if not locked then
+				sendPanel.Open()
+			end
+		end,
 	}
 
 	browser = Browser.new({
@@ -227,6 +237,18 @@ function MainMenu.mount(): Handle
 
 	BottomBar.new().Frame.Parent = site
 	Toast.mount(site, BottomBar.Height + 16)
+
+	sendPanel = SendPanel.new(site)
+	Remotes.TransferReceived.OnClientEvent:Connect(function(notice: any)
+		if typeof(notice) ~= "table" or typeof(notice.Amount) ~= "number" then
+			return
+		end
+		CoinBurst.play(site, {
+			Title = "Received",
+			Amount = notice.Amount,
+			Line = `from {if typeof(notice.From) == "string" then notice.From else "a player"}`,
+		})
+	end)
 
 	navigation.Discover()
 

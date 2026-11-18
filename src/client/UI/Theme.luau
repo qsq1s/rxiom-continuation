@@ -48,6 +48,15 @@ Theme.DesignSize = Vector2.new(1600, 820)
 
 Theme.Site = "rxiom.pro"
 
+-- Grafika monety RXI wgrana na Roblox (ma czarne tło, więc tylko na czarnym tle, np. animacja
+-- przelewu). Size to rozmiar wgranego pliku, Crop to kwadrat z samą monetą w pikselach tego pliku.
+export type ImageSpec = { Id: number, Size: Vector2, Crop: Rect }
+Theme.CoinImage = table.freeze({
+	Id = 126450260339769,
+	Size = Vector2.new(1672, 941),
+	Crop = Rect.new(478, 90, 1224, 836),
+}) :: ImageSpec
+
 -- Waluta w grze (odpowiednik SOL na Axiom).
 Theme.Currency = require(game:GetService("ReplicatedStorage").Shared.Config).Currency
 
