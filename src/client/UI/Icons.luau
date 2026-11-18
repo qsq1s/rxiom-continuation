@@ -491,39 +491,45 @@ function Icons.close(size: number, color: Color3, order: number?): Frame
 	return frame
 end
 
--- Odcinek z zaokrąglonymi końcami; kilka takich odcinków łączy się w czysty grot bez szpar.
-local function capsule(parent: Instance, a: Vector2, b: Vector2, thickness: number, color: Color3)
-	local d = b - a
-	create("Frame", {
-		AnchorPoint = Vector2.new(0.5, 0.5),
-		Position = UDim2.fromOffset((a.X + b.X) / 2, (a.Y + b.Y) / 2),
-		Size = UDim2.fromOffset(d.Magnitude + thickness, thickness),
-		Rotation = math.deg(math.atan2(d.Y, d.X)),
-		BackgroundColor3 = color,
-		BorderSizePixel = 0,
-		Parent = parent,
-	}, { Util.round() })
-end
-
--- Ikony przeglądarki w geometrii Material (siatka 24x24, jak w Chrome) przeskalowanej do `size`.
-local function strokeWidth(size: number): number
-	return math.max(1.5, size / 10)
-end
-
--- Strzałka (wstecz / dalej w pasku przeglądarki).
+-- Strzałka (wstecz / dalej w pasku przeglądarki, przycisk Send): długi trzon i dwa ramiona pod 45°
+-- schodzące się w grocie, z zaokrąglonymi końcami. Ramiona są z nachodzących na siebie kropek, a nie
+-- z obróconej ramki: cienka obrócona ramka renderuje się w Robloxie jako poszarpane schodki.
 function Icons.arrow(size: number, color: Color3, direction: "Left" | "Right", order: number?): Frame
 	local frame = box("ArrowIcon", size, order)
 	local f = size / 24
-	local t = strokeWidth(size)
+	local t = math.max(2, size / 8)
 	local flip = direction == "Right"
-	local function x(v: number): number
-		return if flip then size - v * f else v * f
+	local function at(x: number, y: number): Vector2
+		return Vector2.new(if flip then x * f else size - x * f, y * f)
 	end
-	local c = size / 2
-	local tip = Vector2.new(x(4), c)
-	capsule(frame, Vector2.new(x(20), c), tip, t, color)
-	capsule(frame, tip, Vector2.new(x(12), c - 8 * f), t, color)
-	capsule(frame, tip, Vector2.new(x(12), c + 8 * f), t, color)
+	local tip = at(20.5, 12)
+	-- Trzon: pozioma ramka z zaokrąglonymi końcami.
+	local tail = at(3.5, 12)
+	create("Frame", {
+		Name = "Shaft",
+		AnchorPoint = Vector2.new(0.5, 0.5),
+		Position = UDim2.fromOffset((tail.X + tip.X) / 2, tip.Y),
+		Size = UDim2.fromOffset(math.abs(tip.X - tail.X) + t, t),
+		BackgroundColor3 = color,
+		BorderSizePixel = 0,
+		Parent = frame,
+	}, { Util.round() })
+	for _, wing in { at(14.5, 6), at(14.5, 18) } do
+		local d = wing - tip
+		local steps = math.max(2, math.ceil(d.Magnitude / (t * 0.25)))
+		for i = 0, steps do
+			local p = tip + d * (i / steps)
+			create("Frame", {
+				Name = "Wing",
+				AnchorPoint = Vector2.new(0.5, 0.5),
+				Position = UDim2.fromOffset(p.X, p.Y),
+				Size = UDim2.fromOffset(t, t),
+				BackgroundColor3 = color,
+				BorderSizePixel = 0,
+				Parent = frame,
+			}, { Util.round() })
+		end
+	end
 	return frame
 end
 
