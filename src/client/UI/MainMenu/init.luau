@@ -11,12 +11,14 @@ local Remotes = require(game:GetService("ReplicatedStorage").Shared.Remotes)
 
 local UI = script.Parent
 local Browser = require(UI.Browser)
+local AlertBanner = require(UI.AlertBanner)
 local CoinBurst = require(UI.CoinBurst)
 local Theme = require(UI.Theme)
 local Toast = require(UI.Toast)
 local Tutorial = require(UI.Tutorial)
 local Util = require(UI.Util)
 
+local AlertDialog = require(script.AlertDialog)
 local BottomBar = require(script.BottomBar)
 local CoinView = require(script.CoinView)
 local DiscoverPage = require(script.DiscoverPage)
@@ -141,6 +143,7 @@ function MainMenu.mount(): Handle
 	local trackerPage: TrackerPage.TrackerPage
 	local perpsPage: PerpsPage.PerpsPage
 	local sendPanel: SendPanel.SendPanel
+	local alertDialog: AlertDialog.AlertDialog
 	local handle: Handle
 
 	local function render(page: Page)
@@ -242,7 +245,9 @@ function MainMenu.mount(): Handle
 	discover.Frame.Parent = content
 	pages.Discover = discover.Frame
 
-	coinView = CoinView.new(navigation.Discover)
+	coinView = CoinView.new(navigation.Discover, function(ticker: string)
+		alertDialog.Open(ticker)
+	end)
 	coinView.Frame.Parent = content
 	pages.Coin = coinView.Frame
 
@@ -266,6 +271,17 @@ function MainMenu.mount(): Handle
 	Toast.mount(site, BottomBar.Height + 16)
 
 	sendPanel = SendPanel.new(site)
+	alertDialog = AlertDialog.new(site)
+	AlertBanner.mount(site)
+	Remotes.AlertTriggered.OnClientEvent:Connect(function(notice: any)
+		if typeof(notice) == "table" and typeof(notice.Ticker) == "string" then
+			AlertBanner.show(notice, function(ticker: string)
+				if not locked then
+					openCoin(ticker)
+				end
+			end)
+		end
+	end)
 	Remotes.TransferReceived.OnClientEvent:Connect(function(notice: any)
 		if typeof(notice) ~= "table" or typeof(notice.Amount) ~= "number" then
 			return

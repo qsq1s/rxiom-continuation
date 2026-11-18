@@ -12,6 +12,7 @@ local Types = require(ReplicatedStorage.Shared.Types)
 
 local State = script.Parent.Parent.Parent.State
 local Actions = require(State.Actions)
+local Alerts = require(State.Alerts)
 local Market = require(State.Market)
 local Portfolio = require(State.Portfolio)
 local Settings = require(State.Settings)
@@ -103,7 +104,8 @@ local function tradeRow(parent: Instance, order: number, isHeader: boolean): Tra
 	return { Frame = row, Cells = cells }
 end
 
-function CoinView.new(onBack: () -> ()): CoinView
+-- `onAlerts`: otwiera okno alertów cenowych dla coina.
+function CoinView.new(onBack: () -> (), onAlerts: (ticker: string) -> ()): CoinView
 	local ticker: string? = nil
 
 	local frame: Frame = create("Frame", {
@@ -161,6 +163,54 @@ function CoinView.new(onBack: () -> ()): CoinView
 	local descLabel = Util.text({ Text = "", Size = 14, Color = Colors.TextMuted, Order = 2, Parent = subRow })
 	descLabel.TextTruncate = Enum.TextTruncate.AtEnd
 	create("UISizeConstraint", { MaxSize = Vector2.new(360, math.huge), Parent = descLabel })
+
+	-- Alerty cenowe: pełny dzwonek, gdy na tym coinie są ustawione alerty.
+	local alertButton: TextButton = create("TextButton", {
+		Name = "Alerts",
+		AutoButtonColor = false,
+		Size = UDim2.fromOffset(36, 36),
+		BackgroundColor3 = Colors.Elevated,
+		Text = "",
+		LayoutOrder = 4,
+		Parent = headerLeft,
+	}, { Util.round() })
+	Util.hoverBackground(alertButton, Colors.Elevated, Colors.Border)
+	local alertCount = Util.label({
+		Name = "Count",
+		Text = "",
+		Size = 11,
+		Font = Fonts.Bold,
+		Color = Colors.OnPrimary,
+		AlignX = Enum.TextXAlignment.Center,
+		AnchorPoint = Vector2.new(0.5, 0.5),
+		Position = UDim2.new(1, -4, 0, 4),
+		FrameSize = UDim2.fromOffset(16, 16),
+		Parent = alertButton,
+	})
+	alertCount.BackgroundColor3 = Colors.Primary
+	alertCount.BackgroundTransparency = 0
+	alertCount.ZIndex = 3
+	Util.round().Parent = alertCount
+	local function refreshAlertButton()
+		for _, child in alertButton:GetChildren() do
+			if child.Name == "BellIcon" then
+				child:Destroy()
+			end
+		end
+		local count = if ticker then #Alerts.list(ticker) else 0
+		local icon = Icons.bell(18, Colors.Text, count > 0)
+		icon.AnchorPoint = Vector2.new(0.5, 0.5)
+		icon.Position = UDim2.fromScale(0.5, 0.5)
+		icon.Parent = alertButton
+		alertCount.Text = tostring(count)
+		alertCount.Visible = count > 0
+	end
+	alertButton.Activated:Connect(function()
+		if ticker then
+			onAlerts(ticker)
+		end
+	end)
+	Portfolio.Changed:Connect(refreshAlertButton)
 
 	local stats = Util.group("Stats", 0, Util.hlist(36, nil, Enum.HorizontalAlignment.Right))
 	stats.AnchorPoint = Vector2.new(1, 0.5)
@@ -534,6 +584,7 @@ function CoinView.new(onBack: () -> ()): CoinView
 			nameLabel.Text = def.Name
 			descLabel.Text = def.Description or ""
 			descLabel.Visible = def.Description ~= nil
+			refreshAlertButton()
 			for _, child in iconSlot:GetChildren() do
 				child:Destroy()
 			end

@@ -20,6 +20,8 @@ local Config = {
 	DustTokens = 1e-6,
 	-- Limit TP/SL na gracza.
 	MaxOpenOrders = 10,
+	-- Limit alertów cenowych na gracza.
+	MaxAlerts = 20,
 	-- Limit zleceń w księdze (order book) na gracza.
 	MaxBookOrders = 20,
 	-- Cena zlecenia może odbiegać od ceny rynkowej najwyżej tyle razy w górę lub w dół.

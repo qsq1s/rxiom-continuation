@@ -21,6 +21,7 @@ return table.freeze({
 	TransferReceived = event("TransferReceived"), -- (TransferNotice)
 	PerpsSnapshot = event("PerpsSnapshot"), -- (PerpsSnapshot)
 	CompleteTutorial = event("CompleteTutorial"), -- klient -> serwer: samouczek obejrzany
+	AlertTriggered = event("AlertTriggered"), -- (AlertNotice)
 
 	-- klient -> serwer
 	GetInitialState = func("GetInitialState"), -- () -> InitialState
@@ -42,4 +43,6 @@ return table.freeze({
 	PerpClose = func("PerpClose"), -- (symbol) -> ActionResult
 	PerpCancel = func("PerpCancel"), -- (orderId) -> ActionResult
 	GetPerpCandles = func("GetPerpCandles"), -- (symbol, seconds) -> { Candle }?
+	CreateAlert = func("CreateAlert"), -- (AlertRequest) -> ActionResult
+	DeleteAlert = func("DeleteAlert"), -- (id) -> ActionResult
 })

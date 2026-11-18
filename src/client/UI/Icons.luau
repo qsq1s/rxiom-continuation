@@ -609,6 +609,29 @@ function Icons.plus(size: number, color: Color3, order: number?): Frame
 	return frame
 end
 
+-- Dzwonek (alerty cenowe): kopuła z zaokrągloną górą, rondo na dole i serce dzwonu.
+-- `filled`: pełny (są ustawione alerty) albo tylko kontur.
+function Icons.bell(size: number, color: Color3, filled: boolean?, order: number?): Frame
+	local frame = box("BellIcon", size, order)
+	local function part(pos: Vector2, extent: Vector2, radius: UDim, solid: boolean)
+		local p: Frame = create("Frame", {
+			Position = UDim2.fromScale(pos.X, pos.Y),
+			Size = UDim2.fromScale(extent.X, extent.Y),
+			BackgroundColor3 = color,
+			BackgroundTransparency = if solid then 0 else 1,
+			BorderSizePixel = 0,
+			Parent = frame,
+		}, { create("UICorner", { CornerRadius = radius }) })
+		if not solid then
+			create("UIStroke", { Color = color, Thickness = 1.6, Parent = p })
+		end
+	end
+	part(Vector2.new(0.22, 0.12), Vector2.new(0.56, 0.62), UDim.new(0.5, 0), filled == true)
+	part(Vector2.new(0.1, 0.62), Vector2.new(0.8, 0.12), UDim.new(1, 0), true)
+	part(Vector2.new(0.41, 0.78), Vector2.new(0.18, 0.16), UDim.new(1, 0), true)
+	return frame
+end
+
 -- Ikonka coina z inicjałami, w kolorze coina (kwadratowa albo okrągła).
 function Icons.token(color: Color3, ticker: string, size: number, order: number?, rounded: boolean?): Frame
 	local initials = string.sub(ticker, 1, 1) .. string.sub(ticker, -1)

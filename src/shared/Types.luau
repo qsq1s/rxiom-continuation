@@ -119,6 +119,7 @@ export type PortfolioState = {
 	Alias: string,
 	Perps: PerpAccount,
 	TutorialDone: boolean,
+	Alerts: { PriceAlert },
 }
 
 -- Statystyki handlu gracza (zapisywane w profilu). Basis: tokeny i ich koszt w RX do liczenia
@@ -230,6 +231,25 @@ export type ActionResult = {
 }
 
 export type Notice = { Kind: "Success" | "Error" | "Info", Text: string }
+
+-- Alert cenowy: Above / Below to próg market capu w $, Rise / Drop to zmiana o Percent % od
+-- market capu z chwili ustawienia (zapisana jako próg MarketCap, kierunek w Direction).
+export type AlertKind = "Above" | "Below" | "Rise" | "Drop"
+
+export type PriceAlert = {
+	Id: string,
+	Ticker: string,
+	Kind: AlertKind,
+	Direction: "Above" | "Below",
+	MarketCap: number,
+	Percent: number?,
+	CreatedAt: number,
+}
+
+export type AlertRequest = { Ticker: string, Kind: AlertKind, Value: number }
+
+-- Wysyłane graczowi, gdy alert zadziała.
+export type AlertNotice = { Ticker: string, Kind: AlertKind, Target: number, MarketCap: number, Percent: number? }
 
 ------------------------------------------------------------------
 -- Perpetuals. Ceny w $, Margin/Pnl/Fee w RXI, Size w jednostkach aktywa (np. GHST).

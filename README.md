@@ -60,6 +60,10 @@ Zakładka **Trackers** (`src/server/Services/Tracker.luau`, statystyki w `Stats.
 
 Po pierwszym zalogowaniu (`UI/Tutorial.luau`) strona Discover się przyciemnia, a „reflektor” przesuwa się po kolejnych elementach: saldo, Deposit, lista cen, Quick Buy, Top Movers, Pulse, Trackers, Perpetuals, Send, Portfolio. Obok jest karta z opisem, kropkami postępu i przyciskami Back / Next / Skip (działają też strzałki, Enter i Esc). Na początku kręci się moneta RXI, na końcu leci konfetti. Obejrzenie zapisuje się w profilu (`TutorialDone`), więc samouczek pokazuje się raz; przycisk **?** na górnym pasku włącza go ponownie. Teksty kroków są w `STEPS` na górze pliku.
 
+## Alerty cenowe
+
+Dzwonek na stronie coina otwiera okno alertu (`MainMenu/AlertDialog.luau`, serwer w `src/server/Services/Alerts.luau`): market cap powyżej / poniżej kwoty (np. `200K`, `1.5M`) albo wzrost / spadek o X % od chwili ustawienia. Serwer sprawdza alerty co sekundę; alert, który zadziała, znika, a gracz dostaje baner z dźwiękiem na górze ekranu na każdej zakładce (kliknięcie otwiera coina). Alerty są zapisywane w profilu, do 20 na gracza (`Config.MaxAlerts`).
+
 ## Perpetuals
 
 Zakładka **Perpetuals** (`src/server/Services/Perps.luau`, silnik w `PerpEngine.luau`, ceny w `PerpOracle.luau`, strona w `MainMenu/PerpsPage.luau`, ustawienia w `Config.Perps`):

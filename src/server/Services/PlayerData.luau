@@ -29,6 +29,7 @@ export type Profile = {
 	Perps: Types.PerpAccount,
 	-- Czy gracz przeszedł (albo pominął) samouczek.
 	TutorialDone: boolean,
+	Alerts: { Types.PriceAlert },
 }
 
 local WALLET_ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
@@ -81,6 +82,7 @@ local function defaultProfile(): Profile
 		Received = {},
 		Perps = PerpEngine.empty(),
 		TutorialDone = false,
+		Alerts = {},
 	}
 end
 
@@ -110,6 +112,39 @@ local function sanitizeOrder(o: any): Types.BookOrder?
 	}
 end
 
+local ALERT_KINDS = { Above = "Above", Below = "Below", Rise = "Above", Drop = "Below" }
+
+local function sanitizeAlerts(raw: any): { Types.PriceAlert }
+	local alerts: { Types.PriceAlert } = {}
+	if typeof(raw) ~= "table" then
+		return alerts
+	end
+	for _, a in raw do
+		local direction = if typeof(a) == "table" then ALERT_KINDS[a.Kind] else nil
+		if
+			direction
+			and typeof(a.Id) == "string"
+			and #a.Id <= 64
+			and typeof(a.Ticker) == "string"
+			and Coins.validTicker(Coins.rename(a.Ticker))
+			and finite(a.MarketCap)
+			and a.MarketCap > 0
+			and #alerts < Config.MaxAlerts
+		then
+			table.insert(alerts, {
+				Id = a.Id,
+				Ticker = Coins.rename(a.Ticker),
+				Kind = a.Kind,
+				Direction = direction,
+				MarketCap = a.MarketCap,
+				Percent = if finite(a.Percent) then a.Percent else nil,
+				CreatedAt = if finite(a.CreatedAt) then a.CreatedAt else 0,
+			})
+		end
+	end
+	return alerts
+end
+
 local function sanitize(data: any): Profile
 	if typeof(data) ~= "table" or not finite(data.Balance) then
 		return defaultProfile()
@@ -125,6 +160,7 @@ local function sanitize(data: any): Profile
 		Received = {},
 		Perps = PerpEngine.empty(),
 		TutorialDone = false,
+		Alerts = {},
 	}
 	if typeof(data.Received) == "table" then
 		for _, id in data.Received do
@@ -204,6 +240,7 @@ local function sanitize(data: any): Profile
 	profile.Stats = Stats.sanitize(data.Stats, profile.Positions, profile.Orders)
 	profile.Perps = PerpEngine.sanitize(data.Perps, workspace:GetServerTimeNow())
 	profile.TutorialDone = data.TutorialDone == true
+	profile.Alerts = sanitizeAlerts(data.Alerts)
 	return profile
 end
 
@@ -251,6 +288,7 @@ local function save(player: Player): boolean
 		Received = profile.Received,
 		Perps = profile.Perps,
 		TutorialDone = profile.TutorialDone,
+		Alerts = profile.Alerts,
 	}
 	local ok, err = pcall(store.UpdateAsync, store, key(player), function()
 		return payload

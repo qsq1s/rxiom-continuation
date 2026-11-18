@@ -16,6 +16,7 @@ local Market = require(script.Parent.Market)
 local OrderBook = require(script.Parent.OrderBook)
 local PlayerData = require(script.Parent.PlayerData)
 local Tracker = require(script.Parent.Tracker)
+local Alerts = require(script.Parent.Alerts)
 local Perps = require(script.Parent.Perps)
 local Transfer = require(script.Parent.Transfer)
 
@@ -86,6 +87,7 @@ local function portfolio(player: Player): Types.PortfolioState?
 		Alias = Tracker.alias(player),
 		Perps = profile.Perps,
 		TutorialDone = profile.TutorialDone,
+		Alerts = profile.Alerts,
 	}
 end
 
@@ -603,6 +605,7 @@ function Trading.start()
 	Tracker.start(Trading.portfolioValue, pushPortfolio)
 	Transfer.start(pushPortfolio)
 	Perps.start(pushPortfolio)
+	Alerts.start(pushPortfolio)
 	Remotes.CompleteTutorial.OnServerEvent:Connect(function(player: Player)
 		local profile = PlayerData.get(player)
 		if profile and not profile.TutorialDone then
@@ -649,6 +652,7 @@ function Trading.start()
 		Tracker.release(player)
 		Transfer.release(player)
 		Perps.release(player)
+		Alerts.release(player)
 		PlayerData.release(player)
 	end)
 	game:BindToClose(function()

@@ -61,6 +61,7 @@
 				"TransferReceived": { "$className": "RemoteEvent" },
 				"PerpsSnapshot": { "$className": "RemoteEvent" },
 				"CompleteTutorial": { "$className": "RemoteEvent" },
+				"AlertTriggered": { "$className": "RemoteEvent" },
 				"GetInitialState": { "$className": "RemoteFunction" },
 				"Login": { "$className": "RemoteFunction" },
 				"GetCandles": { "$className": "RemoteFunction" },
@@ -78,7 +79,9 @@
 				"PerpOrder": { "$className": "RemoteFunction" },
 				"PerpClose": { "$className": "RemoteFunction" },
 				"PerpCancel": { "$className": "RemoteFunction" },
-				"GetPerpCandles": { "$className": "RemoteFunction" }
+				"GetPerpCandles": { "$className": "RemoteFunction" },
+				"CreateAlert": { "$className": "RemoteFunction" },
+				"DeleteAlert": { "$className": "RemoteFunction" }
 			}
 		},
 		"ServerScriptService": {
