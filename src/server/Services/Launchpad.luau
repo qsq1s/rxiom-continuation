@@ -429,7 +429,7 @@ local function createCoin(player: Player, request: any): ActionResult
 		return fail(`{ticker} is already taken`)
 	end
 	if profile.Balance + 1e-9 < LAUNCH.Fee then
-		return fail("Insufficient balance")
+		return fail(`Creating a coin costs {LAUNCH.Fee} {Config.Currency}`)
 	end
 
 	-- Opłata i cooldown od razu, przed czekaniem na filtr i zapis, żeby nie dało się kliknąć dwa razy.

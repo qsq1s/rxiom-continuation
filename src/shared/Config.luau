@@ -42,7 +42,8 @@ local Config = {
 
 	-- Pulse: coiny tworzone przez graczy, z bonding curve jak na pump.fun.
 	Launch = {
-		Fee = 0.02,
+		-- Koszt stworzenia coina w RXI (spalany, nie trafia do nikogo).
+		Fee = 100,
 		StartMarketCap = 4_000,
 		-- Po osiągnięciu tego market cap coin "migruje" (trafia do kolumny Migrated na stałe).
 		MigrationMarketCap = 40_000,

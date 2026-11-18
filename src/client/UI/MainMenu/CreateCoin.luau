@@ -21,6 +21,7 @@ local Colors = Theme.Colors
 local Fonts = Theme.Fonts
 
 local LAUNCH = Config.Launch
+local CREATE_LABEL = `Create coin · {Format.decimal(LAUNCH.Fee)} {Config.Currency}`
 local INPUT_BG = Color3.fromHex("101010")
 local WIDTH = 460
 
@@ -166,7 +167,7 @@ function CreateCoin.new(parent: GuiObject, onCreated: (ticker: string) -> ()): C
 	devInput.Size = UDim2.new(1, -28, 1, 0)
 
 	Util.text({
-		Text = `Fee {Format.decimal(LAUNCH.Fee)} {Config.Currency}  ·  starts at {Format.usd(LAUNCH.StartMarketCap)} MC  ·  migrates at {Format.usd(LAUNCH.MigrationMarketCap)} MC`,
+		Text = `Costs {Format.decimal(LAUNCH.Fee)} {Config.Currency}  ·  starts at {Format.usd(LAUNCH.StartMarketCap)} MC  ·  migrates at {Format.usd(LAUNCH.MigrationMarketCap)} MC`,
 		Size = 13,
 		Color = Colors.TextMuted,
 		Order = 6,
@@ -202,7 +203,7 @@ function CreateCoin.new(parent: GuiObject, onCreated: (ticker: string) -> ()): C
 		Position = UDim2.fromScale(1, 0),
 		Size = UDim2.new(1, -142, 1, 0),
 		BackgroundColor3 = Colors.Primary,
-		Text = "Create coin",
+		Text = CREATE_LABEL,
 		TextSize = 16,
 		FontFace = Fonts.Bold,
 		TextColor3 = Colors.OnPrimary,
@@ -273,8 +274,13 @@ function CreateCoin.new(parent: GuiObject, onCreated: (ticker: string) -> ()): C
 			showError(`Minimum dev buy is {Config.MinTradeRx} {Config.Currency}`)
 			return
 		end
-		if LAUNCH.Fee + amount > Portfolio.State.Balance + 1e-9 then
-			showError("Insufficient balance")
+		local balance = Portfolio.State.Balance
+		if LAUNCH.Fee > balance + 1e-9 then
+			showError(`Creating a coin costs {Format.decimal(LAUNCH.Fee)} {Config.Currency}, you have {Format.decimal(balance)}`)
+			return
+		end
+		if LAUNCH.Fee + amount > balance + 1e-9 then
+			showError(`Fee + dev buy is more than your balance ({Format.decimal(balance)} {Config.Currency})`)
 			return
 		end
 		showError(nil)
@@ -284,7 +290,7 @@ function CreateCoin.new(parent: GuiObject, onCreated: (ticker: string) -> ()): C
 		task.spawn(function()
 			local created = Actions.createCoin(name, ticker, colorIndex, amount)
 			busy = false
-			submit.Text = "Create coin"
+			submit.Text = CREATE_LABEL
 			submit.BackgroundTransparency = 0
 			if created then
 				overlay.Visible = false
