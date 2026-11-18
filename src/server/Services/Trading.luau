@@ -10,6 +10,7 @@ local Config = require(ReplicatedStorage.Shared.Config)
 local Format = require(ReplicatedStorage.Shared.Format)
 local Remotes = require(ReplicatedStorage.Shared.Remotes)
 local Types = require(ReplicatedStorage.Shared.Types)
+local Upgrades = require(ReplicatedStorage.Shared.Upgrades)
 local Amm = require(ReplicatedStorage.Shared.Amm)
 local Launchpad = require(script.Parent.Launchpad)
 local Market = require(script.Parent.Market)
@@ -88,6 +89,7 @@ local function portfolio(player: Player): Types.PortfolioState?
 		Perps = profile.Perps,
 		TutorialDone = profile.TutorialDone,
 		Alerts = profile.Alerts,
+		Upgrades = profile.Upgrades,
 	}
 end
 
@@ -394,6 +396,17 @@ local function cancelTrigger(player: Player, profile: Profile, id: number): Acti
 	return fail("Order not found")
 end
 
+-- Zwrot części prowizji (ulepszenie Fee Cashback) od prowizji `fee`.
+local function cashback(profile: Profile, fee: number): number
+	local rate = Upgrades.value(profile.Upgrades, "Cashback")
+	if rate <= 0 or fee <= 0 then
+		return 0
+	end
+	local back = fee * rate
+	profile.Balance += back
+	return back
+end
+
 local function fillTrigger(player: Player, profile: Profile, order: TriggerOrder)
 	-- Etykietę liczymy przed sprzedażą, bo sama sprzedaż obniża market cap.
 	local label = if Market.marketCap(order.Ticker) >= order.Above then "Take profit" else "Stop loss"
@@ -403,7 +416,8 @@ local function fillTrigger(player: Player, profile: Profile, order: TriggerOrder
 	recordFill(p, "Sell", received / (1 - FEE), sold)
 	p.SoldRx += rx
 	profile.Balance += rx
-	Tracker.record(player, order.Ticker, "Sell", sold, rx)
+	local back = cashback(profile, received / (1 - FEE) * FEE)
+	Tracker.record(player, order.Ticker, "Sell", sold, rx + back)
 	notify(player, "Success", `{label} filled: {Format.compact(sold)} {order.Ticker} for {Format.rx(rx)}`)
 end
 
@@ -462,11 +476,12 @@ local function submitTrade(player: Player, request: any): ActionResult
 
 		local tokens, spent = OrderBook.buy(ticker, rx, traderName(player), true)
 		profile.Balance = math.max(0, profile.Balance - spent - fees)
+		local back = cashback(profile, spent * FEE)
 		local p = position(profile, ticker)
 		p.Tokens += tokens
-		p.BoughtRx += spent + fees
+		p.BoughtRx += spent + fees - back
 		recordFill(p, "Buy", spent * (1 - FEE), tokens)
-		Tracker.record(player, ticker, "Buy", tokens, spent + fees)
+		Tracker.record(player, ticker, "Buy", tokens, spent + fees - back)
 
 		local bracket = request.Bracket
 		if typeof(bracket) == "table" and finite(bracket.TakeProfit) and finite(bracket.StopLoss) then
@@ -514,12 +529,13 @@ local function submitTrade(player: Player, request: any): ActionResult
 	local rx = received - fees
 	recordFill(p, "Sell", received / (1 - FEE), sold)
 	p.Tokens -= sold
-	p.SoldRx += rx
+	local back = cashback(profile, received / (1 - FEE) * FEE)
+	p.SoldRx += rx + back
 	profile.Balance += rx
-	Tracker.record(player, ticker, "Sell", sold, rx)
+	Tracker.record(player, ticker, "Sell", sold, rx + back)
 	cleanup(player, profile, ticker)
 	pushPortfolio(player)
-	return { Ok = true, Rx = rx, Tokens = sold }
+	return { Ok = true, Rx = rx + back, Tokens = sold }
 end
 
 local function cancelLimitOrder(player: Player, id: any): ActionResult
@@ -547,11 +563,43 @@ local function claimFaucet(player: Player): ActionResult
 	if now < profile.FaucetReadyAt then
 		return fail(`Next deposit available in {Format.age(profile.FaucetReadyAt - now)}`)
 	end
-	profile.Balance += Config.Faucet.Amount
-	profile.FaucetReadyAt = now + Config.Faucet.Cooldown
+	profile.Balance += Upgrades.value(profile.Upgrades, "FaucetAmount")
+	profile.FaucetReadyAt = now + Upgrades.value(profile.Upgrades, "FaucetSpeed")
 	pushPortfolio(player)
-	return { Ok = true, Rx = Config.Faucet.Amount }
+	return { Ok = true, Rx = Upgrades.value(profile.Upgrades, "FaucetAmount") }
 end
+
+local function buyUpgrade(player: Player, id: any): ActionResult
+	if not allowAction(player) then
+		return fail("Too many requests, slow down")
+	end
+	local profile = PlayerData.get(player)
+	if not profile then
+		return fail("Your data is still loading")
+	end
+	local def = Upgrades.get(id)
+	if not def then
+		return fail("Unknown upgrade")
+	end
+	local cost = Upgrades.nextCost(profile.Upgrades, def.Id)
+	if not cost then
+		return fail(`{def.Name} is already maxed`)
+	end
+	if cost > profile.Balance + 1e-9 then
+		return fail(`{def.Name} costs {Format.rx(cost)}`)
+	end
+	profile.Balance = math.max(0, profile.Balance - cost)
+	local level = Upgrades.level(profile.Upgrades, def.Id) + 1
+	profile.Upgrades[def.Id] = level
+	-- Szybszy Deposit działa od razu, także na trwające odliczanie.
+	if def.Id == "FaucetSpeed" then
+		local ready = os.time() + def.Values[level + 1]
+		profile.FaucetReadyAt = math.min(profile.FaucetReadyAt, ready)
+	end
+	pushPortfolio(player)
+	return { Ok = true, Rx = cost }
+end
+
 
 -- Wykonuje TP/SL, których warunek na market cap został spełniony, i wysyła zaległe portfele.
 function Trading.checkOrders()
@@ -618,6 +666,7 @@ function Trading.start()
 	Remotes.PlaceLimitOrder.OnServerInvoke = placeLimitOrder
 	Remotes.CancelLimitOrder.OnServerInvoke = cancelLimitOrder
 	Remotes.ClaimFaucet.OnServerInvoke = claimFaucet
+	Remotes.BuyUpgrade.OnServerInvoke = buyUpgrade
 	Remotes.GetCandles.OnServerInvoke = function(_player: Player, ticker: any)
 		return if typeof(ticker) == "string" then Market.candles(ticker) else {}
 	end

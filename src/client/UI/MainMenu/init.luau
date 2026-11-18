@@ -27,13 +27,14 @@ local PerpsPage = require(script.PerpsPage)
 local PulsePage = require(script.PulsePage)
 local SendPanel = require(script.SendPanel)
 local TrackerPage = require(script.TrackerPage)
+local UpgradesPage = require(script.UpgradesPage)
 local TopBar = require(script.TopBar)
 
 local create = Util.create
 
 local CONTENT_PADDING = 32
 
-type Page = { Name: "Discover" | "Pulse" | "Trackers" | "Perpetuals" | "Coin" | "Portfolio", Ticker: string? }
+type Page = { Name: "Discover" | "Pulse" | "Trackers" | "Perpetuals" | "Upgrades" | "Coin" | "Portfolio", Ticker: string? }
 
 local MainMenu = {}
 
@@ -71,6 +72,8 @@ local function pagePath(page: Page): string
 		return "/pulse"
 	elseif page.Name == "Trackers" then
 		return "/trackers"
+	elseif page.Name == "Upgrades" then
+		return "/upgrades"
 	elseif page.Name == "Perpetuals" then
 		return "/perps"
 	end
@@ -142,6 +145,7 @@ function MainMenu.mount(): Handle
 	local pulsePage: PulsePage.PulsePage
 	local trackerPage: TrackerPage.TrackerPage
 	local perpsPage: PerpsPage.PerpsPage
+	local upgradesPage: UpgradesPage.UpgradesPage
 	local sendPanel: SendPanel.SendPanel
 	local alertDialog: AlertDialog.AlertDialog
 	local handle: Handle
@@ -158,12 +162,14 @@ function MainMenu.mount(): Handle
 			pulsePage.Refresh()
 		elseif page.Name == "Trackers" then
 			trackerPage.Refresh()
+		elseif page.Name == "Upgrades" then
+			upgradesPage.Refresh()
 		elseif page.Name == "Perpetuals" then
 			perpsPage.Refresh()
 		end
 		local section = page.Name
 		topBar.SetActive(
-			if section == "Portfolio" or section == "Pulse" or section == "Trackers" or section == "Perpetuals"
+			if section == "Portfolio" or section == "Pulse" or section == "Trackers" or section == "Perpetuals" or section == "Upgrades"
 				then section
 				else "Discover"
 		)
@@ -202,6 +208,9 @@ function MainMenu.mount(): Handle
 		end,
 		Trackers = function()
 			navigate({ Name = "Trackers" })
+		end,
+		Upgrades = function()
+			navigate({ Name = "Upgrades" })
 		end,
 		Perpetuals = function()
 			navigate({ Name = "Perpetuals" })
@@ -267,12 +276,25 @@ function MainMenu.mount(): Handle
 	perpsPage.Frame.Parent = content
 	pages.Perpetuals = perpsPage.Frame
 
+	upgradesPage = UpgradesPage.new()
+	upgradesPage.Frame.Parent = content
+	pages.Upgrades = upgradesPage.Frame
+
 	BottomBar.new().Frame.Parent = site
 	Toast.mount(site, BottomBar.Height + 16)
 
 	sendPanel = SendPanel.new(site)
 	alertDialog = AlertDialog.new(site)
 	AlertBanner.mount(site)
+	Remotes.PulseRadar.OnClientEvent:Connect(function(notice: any)
+		if typeof(notice) == "table" and typeof(notice.Ticker) == "string" then
+			AlertBanner.showRadar(notice.Ticker, tostring(notice.Name), tostring(notice.Creator), function(ticker: string)
+				if not locked then
+					openCoin(ticker)
+				end
+			end)
+		end
+	end)
 	Remotes.AlertTriggered.OnClientEvent:Connect(function(notice: any)
 		if typeof(notice) == "table" and typeof(notice.Ticker) == "string" then
 			AlertBanner.show(notice, function(ticker: string)

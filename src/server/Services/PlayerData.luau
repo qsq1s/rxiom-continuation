@@ -7,6 +7,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 
 local Coins = require(ReplicatedStorage.Shared.Coins)
+local Upgrades = require(ReplicatedStorage.Shared.Upgrades)
 local Config = require(ReplicatedStorage.Shared.Config)
 local Signal = require(ReplicatedStorage.Shared.Signal)
 local Types = require(ReplicatedStorage.Shared.Types)
@@ -30,6 +31,8 @@ export type Profile = {
 	-- Czy gracz przeszedł (albo pominął) samouczek.
 	TutorialDone: boolean,
 	Alerts: { Types.PriceAlert },
+	-- Poziomy kupionych ulepszeń (Upgrades.luau).
+	Upgrades: { [string]: number },
 }
 
 local WALLET_ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
@@ -83,6 +86,7 @@ local function defaultProfile(): Profile
 		Perps = PerpEngine.empty(),
 		TutorialDone = false,
 		Alerts = {},
+		Upgrades = {},
 	}
 end
 
@@ -161,6 +165,7 @@ local function sanitize(data: any): Profile
 		Perps = PerpEngine.empty(),
 		TutorialDone = false,
 		Alerts = {},
+		Upgrades = {},
 	}
 	if typeof(data.Received) == "table" then
 		for _, id in data.Received do
@@ -241,6 +246,7 @@ local function sanitize(data: any): Profile
 	profile.Perps = PerpEngine.sanitize(data.Perps, workspace:GetServerTimeNow())
 	profile.TutorialDone = data.TutorialDone == true
 	profile.Alerts = sanitizeAlerts(data.Alerts)
+	profile.Upgrades = Upgrades.sanitize(data.Upgrades)
 	return profile
 end
 
@@ -289,6 +295,7 @@ local function save(player: Player): boolean
 		Perps = profile.Perps,
 		TutorialDone = profile.TutorialDone,
 		Alerts = profile.Alerts,
+		Upgrades = profile.Upgrades,
 	}
 	local ok, err = pcall(store.UpdateAsync, store, key(player), function()
 		return payload

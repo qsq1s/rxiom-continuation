@@ -48,7 +48,9 @@ function AlertBanner.mount(parent: Instance)
 	sound = create("Sound", { Name = "AlertSound", SoundId = SOUND_ID, Volume = 0.7, Parent = SoundService })
 end
 
-function AlertBanner.show(notice: Types.AlertNotice, onOpen: (ticker: string) -> ())
+type Banner = { Ticker: string, Title: string, Text: string, Accent: Color3, Action: string }
+
+local function present(info: Banner, onOpen: (ticker: string) -> ())
 	local parent = container
 	if not parent then
 		return
@@ -57,8 +59,7 @@ function AlertBanner.show(notice: Types.AlertNotice, onOpen: (ticker: string) ->
 		SoundService:PlayLocalSound(sound)
 	end
 	order += 1
-	local rising = notice.Kind == "Above" or notice.Kind == "Rise"
-	local accent = if rising then Colors.Green else Colors.Red
+	local accent = info.Accent
 
 	-- Zewnętrzna ramka trzyma miejsce w liście; karta w środku wjeżdża z góry.
 	local slot: Frame = create("Frame", {
@@ -110,23 +111,23 @@ function AlertBanner.show(notice: Types.AlertNotice, onOpen: (ticker: string) ->
 	bell.Position = UDim2.fromScale(0.5, 0.5)
 	bell.Parent = bellHolder
 
-	local def = Coins.get(notice.Ticker)
+	local def = Coins.get(info.Ticker)
 	local title = Util.group("Title", 0, Util.hlist(8))
 	title.Position = UDim2.fromOffset(70, 14)
 	title.Parent = card
 	if def then
 		Icons.token(def.Color, def.Ticker, 18, 1, true).Parent = title
 	end
-	Util.text({ Text = `{notice.Ticker} alert`, Size = 17, Font = Fonts.Bold, Order = 2, Parent = title })
+	Util.text({ Text = info.Title, Size = 17, Font = Fonts.Bold, Order = 2, Parent = title })
 	Util.label({
-		Text = Alerts.noticeText(notice),
+		Text = info.Text,
 		Size = 14,
 		Color = Colors.TextMuted,
 		Position = UDim2.fromOffset(70, 38),
 		FrameSize = UDim2.new(1, -150, 0, 20),
 		Parent = card,
 	})
-	local view = Util.text({ Text = "View", Size = 14, Font = Fonts.Bold, Color = accent, Parent = card })
+	local view = Util.text({ Text = info.Action, Size = 14, Font = Fonts.Bold, Color = accent, Parent = card })
 	view.AnchorPoint = Vector2.new(1, 0.5)
 	view.Position = UDim2.new(1, -18, 0.5, 0)
 
@@ -144,7 +145,7 @@ function AlertBanner.show(notice: Types.AlertNotice, onOpen: (ticker: string) ->
 	end
 	button.Activated:Connect(function()
 		close()
-		onOpen(notice.Ticker)
+		onOpen(info.Ticker)
 	end)
 
 	-- Wjazd, potem bujanie dzwonkiem jak przy dzwonieniu.
@@ -176,6 +177,29 @@ function AlertBanner.show(notice: Types.AlertNotice, onOpen: (ticker: string) ->
 	for i = 1, #banners - MAX_VISIBLE do
 		banners[i]:Destroy()
 	end
+end
+
+
+function AlertBanner.show(notice: Types.AlertNotice, onOpen: (ticker: string) -> ())
+	local rising = notice.Kind == "Above" or notice.Kind == "Rise"
+	present({
+		Ticker = notice.Ticker,
+		Title = `{notice.Ticker} alert`,
+		Text = Alerts.noticeText(notice),
+		Accent = if rising then Colors.Green else Colors.Red,
+		Action = "View",
+	}, onOpen)
+end
+
+-- Pulse Radar: nowy coin na Pulse; kliknięcie otwiera coina, żeby kupić przed snajperami.
+function AlertBanner.showRadar(ticker: string, name: string, creator: string, onOpen: (ticker: string) -> ())
+	present({
+		Ticker = ticker,
+		Title = `New on Pulse: {ticker}`,
+		Text = `{name} by {creator}. Snipers incoming!`,
+		Accent = Colors.Yellow,
+		Action = "Buy",
+	}, onOpen)
 end
 
 return AlertBanner

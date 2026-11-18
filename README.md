@@ -60,6 +60,18 @@ Zakładka **Trackers** (`src/server/Services/Tracker.luau`, statystyki w `Stats.
 
 Po pierwszym zalogowaniu (`UI/Tutorial.luau`) strona Discover się przyciemnia, a „reflektor” przesuwa się po kolejnych elementach: saldo, Deposit, lista cen, Quick Buy, Top Movers, Pulse, Trackers, Perpetuals, Send, Portfolio. Obok jest karta z opisem, kropkami postępu i przyciskami Back / Next / Skip (działają też strzałki, Enter i Esc). Na początku kręci się moneta RXI, na końcu leci konfetti. Obejrzenie zapisuje się w profilu (`TutorialDone`), więc samouczek pokazuje się raz; przycisk **?** na górnym pasku włącza go ponownie. Teksty kroków są w `STEPS` na górze pliku.
 
+## Upgrades
+
+Zakładka **Upgrades** (`src/shared/Upgrades.luau` z cenami i efektami, strona `MainMenu/UpgradesPage.luau`): stałe ulepszenia za RXI, zapisywane w profilu.
+
+| Ulepszenie | Efekt (bez → max) | Ceny kolejnych poziomów |
+|---|---|---|
+| Bigger Deposit | 1 → 5 RXI za Deposit | 10, 25, 60, 150, 400 |
+| Faster Deposit | 5 min → 1 min | 15, 40, 100, 250, 600 |
+| Fee Cashback | 0 → 60% prowizji wraca po transakcji | 20, 60, 150, 400 |
+| Cheaper Launch | 100 → 40 RXI za coina | 50, 120, 300, 700 |
+| Pulse Radar | baner z przyciskiem Buy przy każdym nowym coinie na Pulse | 75 (jednorazowo) |
+
 ## Boty-snajperzy
 
 Na 85% nowych coinów z Pulse rzuca się 2–5 botów `sniper_xxxx` (`src/server/Services/Snipers.luau`, ustawienia w `Config.Snipers`): pierwszy kupuje 1.5–4 s po starcie (dev buy zwykle zdąży przed nimi), każdy za 3–8% RXI z puli, więc cena skacze. Potem sprzedają według stylu: Flipper (wszystko przy +30–80% albo po 15–45 s), Swing (połowa przy +60–150% albo po 40–90 s, reszta po 2–4 min), Holder (wszystko po 3–7 min). Twórca dostaje ostrzeżenie, a w liście transakcji snajperzy są na żółto.

@@ -22,13 +22,14 @@ local create = Util.create
 local Colors = Theme.Colors
 local Fonts = Theme.Fonts
 
-local NAV_ITEMS = { "Discover", "Pulse", "Trackers", "Perpetuals", "Portfolio", "Rewards" }
+local NAV_ITEMS = { "Discover", "Pulse", "Trackers", "Perpetuals", "Portfolio", "Upgrades" }
 
 export type Navigation = {
 	Discover: () -> (),
 	Pulse: () -> (),
 	Trackers: () -> (),
 	Perpetuals: () -> (),
+	Upgrades: () -> (),
 	Portfolio: () -> (),
 	-- Otwiera okno przelewu RXI.
 	Send: () -> (),
@@ -213,6 +214,8 @@ function TopBar.new(nav: Navigation): TopBar
 				nav.Discover()
 			elseif name == "Pulse" then
 				nav.Pulse()
+			elseif name == "Upgrades" then
+				nav.Upgrades()
 			elseif name == "Perpetuals" then
 				nav.Perpetuals()
 			elseif name == "Trackers" then
@@ -318,6 +321,7 @@ function TopBar.new(nav: Navigation): TopBar
 			Trackers = navButtons.Trackers,
 			Perpetuals = navButtons.Perpetuals,
 			Portfolio = navButtons.Portfolio,
+			Upgrades = navButtons.Upgrades,
 		},
 	}
 end

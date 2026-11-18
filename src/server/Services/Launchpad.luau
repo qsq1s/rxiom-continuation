@@ -18,6 +18,7 @@ local Coins = require(ReplicatedStorage.Shared.Coins)
 local Config = require(ReplicatedStorage.Shared.Config)
 local Remotes = require(ReplicatedStorage.Shared.Remotes)
 local Types = require(ReplicatedStorage.Shared.Types)
+local Upgrades = require(ReplicatedStorage.Shared.Upgrades)
 local Bots = require(script.Parent.Bots)
 local Market = require(script.Parent.Market)
 local OrderBook = require(script.Parent.OrderBook)
@@ -429,15 +430,16 @@ local function createCoin(player: Player, request: any): ActionResult
 	if Coins.get(ticker) or known[ticker] then
 		return fail(`{ticker} is already taken`)
 	end
-	if profile.Balance + 1e-9 < LAUNCH.Fee then
-		return fail(`Creating a coin costs {LAUNCH.Fee} {Config.Currency}`)
+	local fee = Upgrades.value(profile.Upgrades, "LaunchDiscount")
+	if profile.Balance + 1e-9 < fee then
+		return fail(`Creating a coin costs {fee} {Config.Currency}`)
 	end
 
 	-- Opłata i cooldown od razu, przed czekaniem na filtr i zapis, żeby nie dało się kliknąć dwa razy.
 	lastLaunch[player.UserId] = os.clock()
-	profile.Balance -= LAUNCH.Fee
+	profile.Balance -= fee
 	local function abort(message: string): ActionResult
-		profile.Balance += LAUNCH.Fee
+		profile.Balance += fee
 		lastLaunch[player.UserId] = nil
 		pushPortfolio(player)
 		return fail(message)
@@ -504,6 +506,13 @@ local function createCoin(player: Player, request: any): ActionResult
 	prune()
 	pushPortfolio(player)
 	notifyAll("Info", `{player.DisplayName} launched {ticker} on Pulse`, player)
+	-- Pulse Radar: gracze z tym ulepszeniem dostają baner z przyciskiem do szybkiego zakupu.
+	for _, other in Players:GetPlayers() do
+		local otherProfile = PlayerData.get(other)
+		if other ~= player and otherProfile and Upgrades.level(otherProfile.Upgrades, "Radar") > 0 then
+			Remotes.PulseRadar:FireClient(other, { Ticker = ticker, Name = name, Creator = player.DisplayName })
+		end
+	end
 	return { Ok = true, Ticker = ticker }
 end
 

@@ -82,6 +82,11 @@ local STEPS: { Step } = {
 		Body = "Go Long or Short with leverage. Bigger wins, bigger risk: keep an eye on your liquidation price.",
 	},
 	{
+		Target = "Upgrades",
+		Title = "Upgrades",
+		Body = "Spend RXI on permanent boosts: bigger and faster Deposit, fee cashback, cheaper launches and Pulse Radar.",
+	},
+	{
 		Target = "Send",
 		Title = "Send RXI",
 		Body = "Send RXI to a friend by their username or wallet address.",

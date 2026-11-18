@@ -120,6 +120,7 @@ export type PortfolioState = {
 	Perps: PerpAccount,
 	TutorialDone: boolean,
 	Alerts: { PriceAlert },
+	Upgrades: { [string]: number },
 }
 
 -- Statystyki handlu gracza (zapisywane w profilu). Basis: tokeny i ich koszt w RX do liczenia

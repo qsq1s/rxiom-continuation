@@ -7,6 +7,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Amm = require(ReplicatedStorage.Shared.Amm)
 local Config = require(ReplicatedStorage.Shared.Config)
 local Format = require(ReplicatedStorage.Shared.Format)
+local Upgrades = require(ReplicatedStorage.Shared.Upgrades)
 local Types = require(ReplicatedStorage.Shared.Types)
 
 local State = script.Parent.Parent.Parent.State
@@ -588,7 +589,9 @@ function TradePanel.new(): TradePanel
 
 		if side == "Buy" then
 			if not value then
-				quoteLabel.Text = `Fee {Config.FeeBps / 100}% + {Format.decimal(fees)} {Config.Currency} network`
+				local back = Upgrades.value(Portfolio.State.Upgrades, "Cashback")
+				local rebate = if back > 0 then ` ({math.round(back * 100)}% back)` else ""
+				quoteLabel.Text = `Fee {Config.FeeBps / 100}%{rebate} + {Format.decimal(fees)} {Config.Currency} network`
 				return
 			end
 			local tokens = Amm.buyQuote(pool, value)

@@ -6,6 +6,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Coins = require(ReplicatedStorage.Shared.Coins)
 local Config = require(ReplicatedStorage.Shared.Config)
 local Format = require(ReplicatedStorage.Shared.Format)
+local Upgrades = require(ReplicatedStorage.Shared.Upgrades)
 
 local State = script.Parent.Parent.Parent.State
 local Actions = require(State.Actions)
@@ -21,7 +22,14 @@ local Colors = Theme.Colors
 local Fonts = Theme.Fonts
 
 local LAUNCH = Config.Launch
-local CREATE_LABEL = `Create coin · {Format.decimal(LAUNCH.Fee)} {Config.Currency}`
+-- Koszt stworzenia coina dla tego gracza (z ulepszeniem Cheaper Launch).
+local function launchFee(): number
+	return Upgrades.value(Portfolio.State.Upgrades, "LaunchDiscount")
+end
+
+local function createLabel(): string
+	return `Create coin · {Format.decimal(launchFee())} {Config.Currency}`
+end
 local INPUT_BG = Color3.fromHex("101010")
 local WIDTH = 460
 
@@ -166,8 +174,8 @@ function CreateCoin.new(parent: GuiObject, onCreated: (ticker: string) -> ()): C
 	devIcon.Parent = devBox
 	devInput.Size = UDim2.new(1, -28, 1, 0)
 
-	Util.text({
-		Text = `Costs {Format.decimal(LAUNCH.Fee)} {Config.Currency}  ·  starts at {Format.usd(LAUNCH.StartMarketCap)} MC  ·  migrates at {Format.usd(LAUNCH.MigrationMarketCap)} MC`,
+	local costLabel = Util.text({
+		Text = "",
 		Size = 13,
 		Color = Colors.TextMuted,
 		Order = 6,
@@ -203,7 +211,7 @@ function CreateCoin.new(parent: GuiObject, onCreated: (ticker: string) -> ()): C
 		Position = UDim2.fromScale(1, 0),
 		Size = UDim2.new(1, -142, 1, 0),
 		BackgroundColor3 = Colors.Primary,
-		Text = CREATE_LABEL,
+		Text = createLabel(),
 		TextSize = 16,
 		FontFace = Fonts.Bold,
 		TextColor3 = Colors.OnPrimary,
@@ -275,11 +283,12 @@ function CreateCoin.new(parent: GuiObject, onCreated: (ticker: string) -> ()): C
 			return
 		end
 		local balance = Portfolio.State.Balance
-		if LAUNCH.Fee > balance + 1e-9 then
-			showError(`Creating a coin costs {Format.decimal(LAUNCH.Fee)} {Config.Currency}, you have {Format.decimal(balance)}`)
+		local fee = launchFee()
+		if fee > balance + 1e-9 then
+			showError(`Creating a coin costs {Format.decimal(fee)} {Config.Currency}, you have {Format.decimal(balance)}`)
 			return
 		end
-		if LAUNCH.Fee + amount > balance + 1e-9 then
+		if fee + amount > balance + 1e-9 then
 			showError(`Fee + dev buy is more than your balance ({Format.decimal(balance)} {Config.Currency})`)
 			return
 		end
@@ -290,7 +299,7 @@ function CreateCoin.new(parent: GuiObject, onCreated: (ticker: string) -> ()): C
 		task.spawn(function()
 			local created = Actions.createCoin(name, ticker, colorIndex, amount)
 			busy = false
-			submit.Text = CREATE_LABEL
+			submit.Text = createLabel()
 			submit.BackgroundTransparency = 0
 			if created then
 				overlay.Visible = false
@@ -332,6 +341,8 @@ function CreateCoin.new(parent: GuiObject, onCreated: (ticker: string) -> ()): C
 
 	return {
 		Open = function()
+			costLabel.Text = `Costs {Format.decimal(launchFee())} {Config.Currency}  ·  starts at {Format.usd(LAUNCH.StartMarketCap)} MC  ·  migrates at {Format.usd(LAUNCH.MigrationMarketCap)} MC`
+			submit.Text = createLabel()
 			showError(nil)
 			overlay.Visible = true
 			nameInput:CaptureFocus()
