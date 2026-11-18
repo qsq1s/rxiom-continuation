@@ -22,7 +22,7 @@ local create = Util.create
 local Colors = Theme.Colors
 local Fonts = Theme.Fonts
 
-local NAV_ITEMS = { "Discover", "Pulse", "Trackers", "Perpetuals", "Predictions", "Portfolio", "Rewards" }
+local NAV_ITEMS = { "Discover", "Pulse", "Trackers", "Perpetuals", "Portfolio", "Rewards" }
 
 export type Navigation = {
 	Discover: () -> (),
