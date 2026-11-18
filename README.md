@@ -60,7 +60,7 @@ Zakładka **Trackers** (`src/server/Services/Tracker.luau`, statystyki w `Stats.
 
 Zakładka **Perpetuals** (`src/server/Services/Perps.luau`, silnik w `PerpEngine.luau`, ceny w `PerpOracle.luau`, strona w `MainMenu/PerpsPage.luau`, ustawienia w `Config.Perps`):
 
-- Rynki BTC, ETH i SOL z dźwignią (do 40x / 25x / 20x), Long i Short, zlecenia Market i Limit, TP/SL, izolowany margin w RXI. Prowizja 0.045% (market) / 0.015% (limit) od wartości pozycji, funding co godzinę.
+- Rynki GHST (Ghost, duszek Ghostbox), OBBY (Obby) i BACON (Bacon Hair) z dźwignią (do 40x / 25x / 20x), Long i Short, zlecenia Market i Limit, TP/SL, izolowany margin w RXI. Prowizja 0.045% (market) / 0.015% (limit) od wartości pozycji, funding co godzinę.
 - Ceny są symulowane: to deterministyczna funkcja czasu serwera (kilka skal szumu, ok. 2.5–4% zmienności dziennie), więc każdy serwer widzi tę samą cenę, a przeskakiwanie między serwerami nic nie daje. Funkcja jest tylko na serwerze, klient dostaje ceny co sekundę.
 - Zlecenia limit, TP/SL, funding i likwidacje są rozliczane co sekundę, a po powrocie gracza także za czas, kiedy był offline (na próbkach ceny co kilka sekund).
 - Pozycje są zapisywane w profilu, wliczają się do wartości portfela, a wynik do zrealizowanego PnL i rankingu w Trackerze.

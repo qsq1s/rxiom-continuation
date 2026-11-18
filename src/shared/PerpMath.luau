@@ -21,6 +21,13 @@ function PerpMath.market(symbol: any): Config.PerpMarketDef?
 	return if typeof(symbol) == "string" then bySymbol[symbol] else nil
 end
 
+-- Dawne nazwy rynków -> obecne (te same krzywe cen), do wczytywania starszych zapisów.
+local RENAMED: { [string]: string } = { BTC = "GHST", ETH = "OBBY", SOL = "BACON" }
+
+function PerpMath.rename(symbol: any): any
+	return if typeof(symbol) == "string" then RENAMED[symbol] or symbol else symbol
+end
+
 -- Margin utrzymania jako ułamek wartości pozycji: połowa marginu początkowego przy max dźwigni.
 function PerpMath.mmr(symbol: string): number
 	local def = bySymbol[symbol]

@@ -79,9 +79,9 @@ local Config = {
 	-- Perpetuals: kontrakty z dźwignią na symulowane ceny (w $), zabezpieczenie (margin) w RXI.
 	Perps = {
 		Markets = {
-			{ Symbol = "BTC", Name = "Bitcoin", Color = "F7931A", MaxLeverage = 40, Tick = 1 },
-			{ Symbol = "ETH", Name = "Ethereum", Color = "627EEA", MaxLeverage = 25, Tick = 0.1 },
-			{ Symbol = "SOL", Name = "Solana", Color = "9945FF", MaxLeverage = 20, Tick = 0.01 },
+			{ Symbol = "GHST", Name = "Ghost", Color = "FF5C8A", MaxLeverage = 40, Tick = 1 },
+			{ Symbol = "OBBY", Name = "Obby", Color = "22D3EE", MaxLeverage = 25, Tick = 0.1 },
+			{ Symbol = "BACON", Name = "Bacon Hair", Color = "F97316", MaxLeverage = 20, Tick = 0.01 },
 		} :: { PerpMarketDef },
 		-- Prowizja od wartości pozycji: zlecenie rynkowe (taker) i limit (maker).
 		TakerFee = 0.00045,

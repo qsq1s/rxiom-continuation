@@ -326,6 +326,16 @@ local function optionalPrice(v: any): number?
 	return if finite(v) and v > 0 then v else nil
 end
 
+-- Kopia wpisu z zapisu z nazwą rynku po zmianie nazw (BTC -> GHST itd.).
+local function renamed(entry: any): any
+	if typeof(entry) ~= "table" then
+		return entry
+	end
+	local copy = table.clone(entry)
+	copy.Symbol = PerpMath.rename(copy.Symbol)
+	return copy
+end
+
 function Engine.sanitize(raw: any, now: number): PerpAccount
 	local account = Engine.empty()
 	account.CheckedAt = now
@@ -336,7 +346,8 @@ function Engine.sanitize(raw: any, now: number): PerpAccount
 		account.CheckedAt = math.min(raw.CheckedAt, now)
 	end
 	if typeof(raw.Positions) == "table" then
-		for _, p in raw.Positions do
+		for _, entry in raw.Positions do
+			local p = renamed(entry)
 			if
 				typeof(p) == "table"
 				and PerpMath.market(p.Symbol)
@@ -366,7 +377,8 @@ function Engine.sanitize(raw: any, now: number): PerpAccount
 		end
 	end
 	if typeof(raw.Orders) == "table" then
-		for _, o in raw.Orders do
+		for _, entry in raw.Orders do
+			local o = renamed(entry)
 			if
 				typeof(o) == "table"
 				and typeof(o.Id) == "string"
@@ -400,7 +412,8 @@ function Engine.sanitize(raw: any, now: number): PerpAccount
 		end
 	end
 	if typeof(raw.History) == "table" then
-		for _, h in raw.History do
+		for _, entry in raw.History do
+			local h = renamed(entry)
 			local action = if typeof(h) == "table" then h.Action else nil
 			if
 				typeof(h) == "table"

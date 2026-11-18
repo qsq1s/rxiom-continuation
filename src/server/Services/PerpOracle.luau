@@ -11,9 +11,9 @@ local Config = require(game:GetService("ReplicatedStorage").Shared.Config)
 type Params = { Seed: number, Price: number, DailyVol: number, Volume: number, OpenInterest: number }
 
 local PARAMS: { [string]: Params } = {
-	BTC = { Seed = 1103, Price = 64_000, DailyVol = 0.025, Volume = 3.6e9, OpenInterest = 2.5e9 },
-	ETH = { Seed = 2207, Price = 1_800, DailyVol = 0.032, Volume = 1.4e9, OpenInterest = 9.1e8 },
-	SOL = { Seed = 3301, Price = 74, DailyVol = 0.042, Volume = 3.2e8, OpenInterest = 2.1e8 },
+	GHST = { Seed = 1103, Price = 64_000, DailyVol = 0.025, Volume = 3.6e9, OpenInterest = 2.5e9 },
+	OBBY = { Seed = 2207, Price = 1_800, DailyVol = 0.032, Volume = 1.4e9, OpenInterest = 9.1e8 },
+	BACON = { Seed = 3301, Price = 74, DailyVol = 0.042, Volume = 3.2e8, OpenInterest = 2.1e8 },
 }
 
 local OCTAVES = { 15, 60, 300, 1800, 7200, 28_800, 86_400, 345_600, 1_382_400 }

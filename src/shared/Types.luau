@@ -231,7 +231,7 @@ export type ActionResult = {
 export type Notice = { Kind: "Success" | "Error" | "Info", Text: string }
 
 ------------------------------------------------------------------
--- Perpetuals. Ceny w $, Margin/Pnl/Fee w RXI, Size w jednostkach aktywa (np. BTC).
+-- Perpetuals. Ceny w $, Margin/Pnl/Fee w RXI, Size w jednostkach aktywa (np. GHST).
 
 export type PerpSide = "Long" | "Short"
 
