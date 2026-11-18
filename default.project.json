@@ -60,6 +60,7 @@
 				"Notify": { "$className": "RemoteEvent" },
 				"TransferReceived": { "$className": "RemoteEvent" },
 				"PerpsSnapshot": { "$className": "RemoteEvent" },
+				"CompleteTutorial": { "$className": "RemoteEvent" },
 				"GetInitialState": { "$className": "RemoteFunction" },
 				"Login": { "$className": "RemoteFunction" },
 				"GetCandles": { "$className": "RemoteFunction" },

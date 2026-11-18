@@ -40,6 +40,8 @@ local SORTS = { "Top", "Trending", "Gainers", "New" }
 
 export type DiscoverPage = {
 	Frame: Frame,
+	-- Elementy pokazywane w samouczku.
+	Targets: { [string]: GuiObject },
 }
 
 local DiscoverPage = {}
@@ -566,7 +568,8 @@ function DiscoverPage.new(openCoin: (ticker: string) -> ()): DiscoverPage
 		Settings.set("Timeframe", value)
 	end).Parent =
 		controls
-	quickBuy(3).Parent = controls
+	local quickBuyControl = quickBuy(3)
+	quickBuyControl.Parent = controls
 
 	local headerDivider = Util.divider(false, Colors.Divider)
 	headerDivider.Position = UDim2.fromOffset(24, HEADER_HEIGHT)
@@ -738,7 +741,10 @@ function DiscoverPage.new(openCoin: (ticker: string) -> ()): DiscoverPage
 	end)
 	refresh()
 
-	return { Frame = frame }
+	return {
+		Frame = frame,
+		Targets = { Prices = prices, Rows = list, QuickBuy = quickBuyControl, Movers = movers, Side = side },
+	}
 end
 
 return DiscoverPage

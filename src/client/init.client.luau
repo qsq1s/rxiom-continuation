@@ -19,6 +19,7 @@ local Portfolio = require(script.State.Portfolio)
 local Login = require(script.UI.Login)
 local MainMenu = require(script.UI.MainMenu)
 local Toast = require(script.UI.Toast)
+local Tutorial = require(script.UI.Tutorial)
 
 local initial: Types.InitialState = Remotes.GetInitialState:InvokeServer()
 Market.start(initial)
@@ -27,7 +28,12 @@ Perps.start()
 
 local menu = MainMenu.mount()
 -- Ekran logowania przykrywa terminal, dopóki gracz nie połączy portfela Ghostbox.
-Login.show(menu)
+-- Po zalogowaniu nowy gracz od razu dostaje samouczek na Discover.
+Login.show(menu, function()
+	if not Portfolio.State.TutorialDone then
+		Tutorial.start(menu)
+	end
+end)
 
 Remotes.Notify.OnClientEvent:Connect(function(notice: Types.Notice)
 	Toast.show(notice.Text, notice.Kind)

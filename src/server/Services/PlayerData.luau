@@ -27,6 +27,8 @@ export type Profile = {
 	-- ID ostatnio zaksięgowanych przelewów przychodzących (ochrona przed podwójnym zaksięgowaniem).
 	Received: { string },
 	Perps: Types.PerpAccount,
+	-- Czy gracz przeszedł (albo pominął) samouczek.
+	TutorialDone: boolean,
 }
 
 local WALLET_ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
@@ -78,6 +80,7 @@ local function defaultProfile(): Profile
 		Stats = Stats.empty(),
 		Received = {},
 		Perps = PerpEngine.empty(),
+		TutorialDone = false,
 	}
 end
 
@@ -121,6 +124,7 @@ local function sanitize(data: any): Profile
 		Stats = Stats.empty(),
 		Received = {},
 		Perps = PerpEngine.empty(),
+		TutorialDone = false,
 	}
 	if typeof(data.Received) == "table" then
 		for _, id in data.Received do
@@ -199,6 +203,7 @@ local function sanitize(data: any): Profile
 	end
 	profile.Stats = Stats.sanitize(data.Stats, profile.Positions, profile.Orders)
 	profile.Perps = PerpEngine.sanitize(data.Perps, workspace:GetServerTimeNow())
+	profile.TutorialDone = data.TutorialDone == true
 	return profile
 end
 
@@ -245,6 +250,7 @@ local function save(player: Player): boolean
 		Stats = profile.Stats,
 		Received = profile.Received,
 		Perps = profile.Perps,
+		TutorialDone = profile.TutorialDone,
 	}
 	local ok, err = pcall(store.UpdateAsync, store, key(player), function()
 		return payload

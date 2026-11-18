@@ -20,6 +20,7 @@ return table.freeze({
 	Notify = event("Notify"), -- (Notice)
 	TransferReceived = event("TransferReceived"), -- (TransferNotice)
 	PerpsSnapshot = event("PerpsSnapshot"), -- (PerpsSnapshot)
+	CompleteTutorial = event("CompleteTutorial"), -- klient -> serwer: samouczek obejrzany
 
 	-- klient -> serwer
 	GetInitialState = func("GetInitialState"), -- () -> InitialState

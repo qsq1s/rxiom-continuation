@@ -17,6 +17,7 @@ Portfolio.State = {
 	Public = false,
 	Alias = "",
 	Perps = { Positions = {}, Orders = {}, History = {}, CheckedAt = 0 },
+	TutorialDone = false,
 } :: Types.PortfolioState
 Portfolio.Changed = Signal.new() -- ()
 

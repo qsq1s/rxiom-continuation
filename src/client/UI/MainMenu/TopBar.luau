@@ -32,6 +32,8 @@ export type Navigation = {
 	Portfolio: () -> (),
 	-- Otwiera okno przelewu RXI.
 	Send: () -> (),
+	-- Pokazuje samouczek od nowa.
+	Tutorial: () -> (),
 }
 
 local TopBar = {}
@@ -118,7 +120,7 @@ local function avatar(): ImageLabel
 		Name = "Avatar",
 		Size = UDim2.fromOffset(36, 36),
 		BackgroundColor3 = Colors.Elevated,
-		LayoutOrder = 6,
+		LayoutOrder = 7,
 	}, { Util.round() })
 	task.spawn(function()
 		local ok, content = pcall(
@@ -138,6 +140,8 @@ end
 export type TopBar = {
 	Frame: Frame,
 	SetActive: (name: string) -> (),
+	-- Elementy pokazywane w samouczku.
+	Targets: { [string]: GuiObject },
 }
 
 function TopBar.new(nav: Navigation): TopBar
@@ -264,7 +268,17 @@ function TopBar.new(nav: Navigation): TopBar
 	send.Parent = right
 	send.Activated:Connect(nav.Send)
 
-	local favorites = pillButton("Favorites", 4, 40)
+	-- Ponowne uruchomienie samouczka.
+	local help = pillButton("Help", 4, 40)
+	local helpIcon = Icons.help(18, Colors.Text)
+	helpIcon.AnchorPoint = Vector2.new(0.5, 0.5)
+	helpIcon.Position = UDim2.fromScale(0.5, 0.5)
+	helpIcon.Parent = help
+	Util.hoverBackground(help, Colors.Elevated, Colors.Border)
+	help.Parent = right
+	help.Activated:Connect(nav.Tutorial)
+
+	local favorites = pillButton("Favorites", 5, 40)
 	local star = Icons.star(18, Colors.Text)
 	star.AnchorPoint = Vector2.new(0.5, 0.5)
 	star.Position = UDim2.fromScale(0.5, 0.5)
@@ -275,7 +289,7 @@ function TopBar.new(nav: Navigation): TopBar
 		Toast.show("Favorites are coming soon", "Info")
 	end)
 
-	local wallet = pillButton("Wallet", 5)
+	local wallet = pillButton("Wallet", 6)
 	Util.padding(0, 14).Parent = wallet
 	Util.hlist(8).Parent = wallet
 	Icons.wallet(16, Colors.Text, 1).Parent = wallet
@@ -295,6 +309,16 @@ function TopBar.new(nav: Navigation): TopBar
 	return {
 		Frame = frame,
 		SetActive = setActive,
+		Targets = {
+			Deposit = deposit,
+			Send = send,
+			Help = help,
+			Wallet = wallet,
+			Pulse = navButtons.Pulse,
+			Trackers = navButtons.Trackers,
+			Perpetuals = navButtons.Perpetuals,
+			Portfolio = navButtons.Portfolio,
+		},
 	}
 end
 

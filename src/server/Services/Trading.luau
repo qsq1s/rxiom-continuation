@@ -85,6 +85,7 @@ local function portfolio(player: Player): Types.PortfolioState?
 		Public = profile.Public,
 		Alias = Tracker.alias(player),
 		Perps = profile.Perps,
+		TutorialDone = profile.TutorialDone,
 	}
 end
 
@@ -602,6 +603,13 @@ function Trading.start()
 	Tracker.start(Trading.portfolioValue, pushPortfolio)
 	Transfer.start(pushPortfolio)
 	Perps.start(pushPortfolio)
+	Remotes.CompleteTutorial.OnServerEvent:Connect(function(player: Player)
+		local profile = PlayerData.get(player)
+		if profile and not profile.TutorialDone then
+			profile.TutorialDone = true
+			pushPortfolio(player)
+		end
+	end)
 
 	Remotes.SubmitTrade.OnServerInvoke = submitTrade
 	Remotes.PlaceLimitOrder.OnServerInvoke = placeLimitOrder

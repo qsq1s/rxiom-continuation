@@ -88,7 +88,8 @@ local function shortWallet(wallet: string): string
 	return string.sub(wallet, 1, 4) .. "..." .. string.sub(wallet, -4)
 end
 
-function Login.show(host: Host)
+-- `onDone`: gdy ekran logowania już zjechał i widać terminal.
+function Login.show(host: Host, onDone: (() -> ())?)
 	local player = Players.LocalPlayer
 	local connections: { RBXScriptConnection } = {}
 	local state: "idle" | "choosing" | "connecting" | "revealing" | "done" = "idle"
@@ -593,6 +594,9 @@ function Login.show(host: Host)
 		)
 		task.delay(1.05, function()
 			screen:Destroy()
+			if onDone then
+				onDone()
+			end
 		end)
 	end
 

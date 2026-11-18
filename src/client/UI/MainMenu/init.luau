@@ -14,6 +14,7 @@ local Browser = require(UI.Browser)
 local CoinBurst = require(UI.CoinBurst)
 local Theme = require(UI.Theme)
 local Toast = require(UI.Toast)
+local Tutorial = require(UI.Tutorial)
 local Util = require(UI.Util)
 
 local BottomBar = require(script.BottomBar)
@@ -81,6 +82,9 @@ export type Handle = {
 	-- Pokazuje w przeglądarce podaną ścieżkę i blokuje nawigację (ekran logowania).
 	Lock: (path: string) -> (),
 	Unlock: () -> (),
+	-- Elementy strony pokazywane w samouczku i przejście na Discover.
+	Targets: { [string]: GuiObject },
+	ShowDiscover: () -> (),
 }
 
 function MainMenu.mount(): Handle
@@ -137,6 +141,7 @@ function MainMenu.mount(): Handle
 	local trackerPage: TrackerPage.TrackerPage
 	local perpsPage: PerpsPage.PerpsPage
 	local sendPanel: SendPanel.SendPanel
+	local handle: Handle
 
 	local function render(page: Page)
 		for name, frame in pages do
@@ -204,6 +209,11 @@ function MainMenu.mount(): Handle
 		Send = function()
 			if not locked then
 				sendPanel.Open()
+			end
+		end,
+		Tutorial = function()
+			if not locked then
+				Tutorial.start(handle)
 			end
 		end,
 	}
@@ -295,9 +305,19 @@ function MainMenu.mount(): Handle
 	GuiService:GetPropertyChangedSignal("TopbarInset"):Connect(relayout)
 	relayout()
 
-	return {
+	local targets: { [string]: GuiObject } = {}
+	for name, target in topBar.Targets do
+		targets[name] = target
+	end
+	for name, target in discover.Targets do
+		targets[name] = target
+	end
+
+	handle = {
 		Gui = gui,
 		Root = root,
+		Targets = targets,
+		ShowDiscover = navigation.Discover,
 		Lock = function(path: string)
 			locked = true
 			browser.SetPath(path)
@@ -311,6 +331,7 @@ function MainMenu.mount(): Handle
 			end
 		end,
 	}
+	return handle
 end
 
 return MainMenu

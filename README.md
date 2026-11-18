@@ -56,6 +56,10 @@ Zakładka **Trackers** (`src/server/Services/Tracker.luau`, statystyki w `Stats.
 - **Prywatność**: każdy profil jest domyślnie prywatny i gracz sam go upublicznia przełącznikiem w „Your profile”. Prywatny profil nie pokazuje żadnych liczb ani adresu portfela, nie da się go znaleźć po adresie, nie ma go w rankingu, a w listach transakcji gracz widnieje pod anonimowym adresem. Saldo i pozycje nigdy nie są publikowane osobno, tylko łączna wartość portfela.
 - Publiczne dane są zapisywane w DataStore (`RXIOM_Public_v1`, ranking w OrderedDataStore `RXIOM_Leaderboard_v1`) co minutę i przy wyjściu, żeby było je widać, gdy gracz jest offline. Przejście na prywatny od razu je usuwa.
 
+## Samouczek
+
+Po pierwszym zalogowaniu (`UI/Tutorial.luau`) strona Discover się przyciemnia, a „reflektor” przesuwa się po kolejnych elementach: saldo, Deposit, lista cen, Quick Buy, Top Movers, Pulse, Trackers, Perpetuals, Send, Portfolio. Obok jest karta z opisem, kropkami postępu i przyciskami Back / Next / Skip (działają też strzałki, Enter i Esc). Na początku kręci się moneta RXI, na końcu leci konfetti. Obejrzenie zapisuje się w profilu (`TutorialDone`), więc samouczek pokazuje się raz; przycisk **?** na górnym pasku włącza go ponownie. Teksty kroków są w `STEPS` na górze pliku.
+
 ## Perpetuals
 
 Zakładka **Perpetuals** (`src/server/Services/Perps.luau`, silnik w `PerpEngine.luau`, ceny w `PerpOracle.luau`, strona w `MainMenu/PerpsPage.luau`, ustawienia w `Config.Perps`):

@@ -118,6 +118,7 @@ export type PortfolioState = {
 	-- Anonimowy adres, pod którym prywatny gracz widnieje w listach transakcji (w tej sesji).
 	Alias: string,
 	Perps: PerpAccount,
+	TutorialDone: boolean,
 }
 
 -- Statystyki handlu gracza (zapisywane w profilu). Basis: tokeny i ich koszt w RX do liczenia
