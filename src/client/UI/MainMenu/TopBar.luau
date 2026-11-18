@@ -28,6 +28,7 @@ export type Navigation = {
 	Discover: () -> (),
 	Pulse: () -> (),
 	Trackers: () -> (),
+	Perpetuals: () -> (),
 	Portfolio: () -> (),
 	-- Otwiera okno przelewu RXI.
 	Send: () -> (),
@@ -208,6 +209,8 @@ function TopBar.new(nav: Navigation): TopBar
 				nav.Discover()
 			elseif name == "Pulse" then
 				nav.Pulse()
+			elseif name == "Perpetuals" then
+				nav.Perpetuals()
 			elseif name == "Trackers" then
 				nav.Trackers()
 			elseif name == "Portfolio" then

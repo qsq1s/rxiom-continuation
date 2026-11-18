@@ -55,7 +55,9 @@ local function controlButton(text: string, order: number): TextButton
 	return button
 end
 
-function Chart.new(maxCandles: number): Chart
+-- `formatValue`: podpisy osi i ceny (domyślnie market cap w $, np. "$14.2K").
+function Chart.new(maxCandles: number, formatValue: ((number) -> string)?): Chart
+	local format = formatValue or Format.usd
 	local candles: { Candle } = {}
 	local valueScale = 1
 	local fills: { Fill } = {}
@@ -309,7 +311,7 @@ function Chart.new(maxCandles: number): Chart
 
 		for i, label in gridLabels do
 			local v = hi - (i - 1) / (GRID_LINES - 1) * range
-			label.Text = Format.usd(v * valueScale)
+			label.Text = format(v * valueScale)
 		end
 
 		local newest = candles[total]
@@ -322,7 +324,7 @@ function Chart.new(maxCandles: number): Chart
 		lastLine.BackgroundColor3 = color
 		lastLabel.Position = UDim2.new(0, 4, lastY, 0)
 		lastLabel.BackgroundColor3 = color
-		lastLabel.Text = Format.usd(newest.C * valueScale)
+		lastLabel.Text = format(newest.C * valueScale)
 
 		-- Średnia cena wejścia; poza zakresem przyklejona do krawędzi, żeby zawsze było ją widać.
 		local entry = entryPrice
@@ -332,7 +334,7 @@ function Chart.new(maxCandles: number): Chart
 			local ey = math.clamp(y(entry), 0, 1)
 			entryLine.Position = UDim2.fromScale(0, ey)
 			entryLabel.Position = UDim2.new(0, 4, ey, 0)
-			entryLabel.Text = "Entry " .. Format.usd(entry * valueScale)
+			entryLabel.Text = "Entry " .. format(entry * valueScale)
 		end
 
 		-- Znaczniki: świeca, w której była transakcja, i cena wykonania.

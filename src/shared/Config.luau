@@ -2,6 +2,8 @@
 -- Ustawienia ekonomii i rynku. Kwoty w RX (waluta gry, odpowiednik SOL), wartości dla graczy w $.
 
 export type Timeframe = { Key: string, Seconds: number }
+-- Rynek perpetual: Tick to krok ceny w księdze, MaxLeverage maksymalna dźwignia.
+export type PerpMarketDef = { Symbol: string, Name: string, Color: string, MaxLeverage: number, Tick: number }
 
 local Config = {
 	-- Kurs RX -> $ używany tylko do wyświetlania (market cap, volume, liquidity).
@@ -73,6 +75,25 @@ local Config = {
 		{ Key = "1h", Seconds = 3600 },
 		{ Key = "24h", Seconds = 86400 },
 	} :: { Timeframe },
+
+	-- Perpetuals: kontrakty z dźwignią na symulowane ceny (w $), zabezpieczenie (margin) w RXI.
+	Perps = {
+		Markets = {
+			{ Symbol = "BTC", Name = "Bitcoin", Color = "F7931A", MaxLeverage = 40, Tick = 1 },
+			{ Symbol = "ETH", Name = "Ethereum", Color = "627EEA", MaxLeverage = 25, Tick = 0.1 },
+			{ Symbol = "SOL", Name = "Solana", Color = "9945FF", MaxLeverage = 20, Tick = 0.01 },
+		} :: { PerpMarketDef },
+		-- Prowizja od wartości pozycji: zlecenie rynkowe (taker) i limit (maker).
+		TakerFee = 0.00045,
+		MakerFee = 0.00015,
+		-- Funding co godzinę (longi płacą shortom, gdy stawka dodatnia).
+		FundingSeconds = 3600,
+		MaxOrders = 10,
+		HistoryLength = 40,
+		CandleCount = 150,
+		Timeframes = { 60, 300, 900, 3600 },
+		LeveragePresets = { 1, 2, 5, 10, 20 },
+	},
 }
 
 return table.freeze(Config)

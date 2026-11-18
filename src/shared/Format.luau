@@ -69,6 +69,27 @@ function Format.rx(n: number): string
 	return Format.decimal(n) .. " " .. Config.Currency
 end
 
+-- Część całkowita z przecinkami co trzy cyfry: "1234567" -> "1,234,567".
+local function group(digits: string): string
+	local s = string.reverse((string.gsub(string.reverse(digits), "(%d%d%d)", "%1,")))
+	return (string.gsub(s, "^,", ""))
+end
+
+-- Liczba całkowita z separatorami tysięcy: 1168777 -> "1,168,777".
+function Format.int(n: number): string
+	return (if n < 0 then "-" else "") .. group(string.format("%d", math.round(math.abs(n))))
+end
+
+-- Cena (perpetuals) z separatorami i liczbą miejsc po przecinku zależną od wielkości:
+-- 63,919 / 1,790.5 / 74.11 / 0.1234.
+function Format.price(n: number): string
+	local abs = math.abs(n)
+	local decimals = if abs >= 10000 then 0 elseif abs >= 1000 then 1 elseif abs >= 10 then 2 elseif abs >= 1 then 3 else 4
+	local s = string.format(`%.{decimals}f`, abs)
+	local whole, rest = string.match(s, "^(%d+)(.*)$")
+	return (if n < 0 then "-" else "") .. group(whole or s) .. (rest or "")
+end
+
 function Format.percent(n: number): string
 	return string.format("%s%.2f%%", if n > 0 then "+" else "", n)
 end

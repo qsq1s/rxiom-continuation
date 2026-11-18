@@ -59,6 +59,7 @@
 				"PortfolioChanged": { "$className": "RemoteEvent" },
 				"Notify": { "$className": "RemoteEvent" },
 				"TransferReceived": { "$className": "RemoteEvent" },
+				"PerpsSnapshot": { "$className": "RemoteEvent" },
 				"GetInitialState": { "$className": "RemoteFunction" },
 				"Login": { "$className": "RemoteFunction" },
 				"GetCandles": { "$className": "RemoteFunction" },
@@ -72,7 +73,11 @@
 				"GetLeaderboard": { "$className": "RemoteFunction" },
 				"SetProfilePublic": { "$className": "RemoteFunction" },
 				"FindRecipient": { "$className": "RemoteFunction" },
-				"SendRxi": { "$className": "RemoteFunction" }
+				"SendRxi": { "$className": "RemoteFunction" },
+				"PerpOrder": { "$className": "RemoteFunction" },
+				"PerpClose": { "$className": "RemoteFunction" },
+				"PerpCancel": { "$className": "RemoteFunction" },
+				"GetPerpCandles": { "$className": "RemoteFunction" }
 			}
 		},
 		"ServerScriptService": {

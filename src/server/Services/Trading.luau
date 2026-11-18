@@ -16,6 +16,7 @@ local Market = require(script.Parent.Market)
 local OrderBook = require(script.Parent.OrderBook)
 local PlayerData = require(script.Parent.PlayerData)
 local Tracker = require(script.Parent.Tracker)
+local Perps = require(script.Parent.Perps)
 local Transfer = require(script.Parent.Transfer)
 
 type Profile = PlayerData.Profile
@@ -83,6 +84,7 @@ local function portfolio(player: Player): Types.PortfolioState?
 		Wallet = profile.Wallet,
 		Public = profile.Public,
 		Alias = Tracker.alias(player),
+		Perps = profile.Perps,
 	}
 end
 
@@ -114,7 +116,7 @@ function Trading.portfolioValue(player: Player): number
 			value += amount * Amm.price(state.Pool)
 		end
 	end
-	return value
+	return value + Perps.equity(profile)
 end
 
 local function pushPortfolio(player: Player)
@@ -599,6 +601,7 @@ function Trading.start()
 	Launchpad.start(pushPortfolio)
 	Tracker.start(Trading.portfolioValue, pushPortfolio)
 	Transfer.start(pushPortfolio)
+	Perps.start(pushPortfolio)
 
 	Remotes.SubmitTrade.OnServerInvoke = submitTrade
 	Remotes.PlaceLimitOrder.OnServerInvoke = placeLimitOrder
@@ -637,6 +640,7 @@ function Trading.start()
 		-- Publiczne statystyki przed zapisem profilu (wartość portfela liczona z jeszcze wczytanego).
 		Tracker.release(player)
 		Transfer.release(player)
+		Perps.release(player)
 		PlayerData.release(player)
 	end)
 	game:BindToClose(function()

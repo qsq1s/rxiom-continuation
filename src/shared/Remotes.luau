@@ -19,6 +19,7 @@ return table.freeze({
 	PortfolioChanged = event("PortfolioChanged"), -- (PortfolioState)
 	Notify = event("Notify"), -- (Notice)
 	TransferReceived = event("TransferReceived"), -- (TransferNotice)
+	PerpsSnapshot = event("PerpsSnapshot"), -- (PerpsSnapshot)
 
 	-- klient -> serwer
 	GetInitialState = func("GetInitialState"), -- () -> InitialState
@@ -36,4 +37,8 @@ return table.freeze({
 	SetProfilePublic = func("SetProfilePublic"), -- (boolean) -> ActionResult
 	FindRecipient = func("FindRecipient"), -- (query) -> RecipientInfo
 	SendRxi = func("SendRxi"), -- (TransferRequest) -> ActionResult (z To)
+	PerpOrder = func("PerpOrder"), -- (PerpOrderRequest) -> ActionResult
+	PerpClose = func("PerpClose"), -- (symbol) -> ActionResult
+	PerpCancel = func("PerpCancel"), -- (orderId) -> ActionResult
+	GetPerpCandles = func("GetPerpCandles"), -- (symbol, seconds) -> { Candle }?
 })

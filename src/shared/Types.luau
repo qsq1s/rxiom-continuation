@@ -117,6 +117,7 @@ export type PortfolioState = {
 	Public: boolean,
 	-- Anonimowy adres, pod którym prywatny gracz widnieje w listach transakcji (w tej sesji).
 	Alias: string,
+	Perps: PerpAccount,
 }
 
 -- Statystyki handlu gracza (zapisywane w profilu). Basis: tokeny i ich koszt w RX do liczenia
@@ -228,6 +229,91 @@ export type ActionResult = {
 }
 
 export type Notice = { Kind: "Success" | "Error" | "Info", Text: string }
+
+------------------------------------------------------------------
+-- Perpetuals. Ceny w $, Margin/Pnl/Fee w RXI, Size w jednostkach aktywa (np. BTC).
+
+export type PerpSide = "Long" | "Short"
+
+-- Pozycja z izolowanym marginem. Deposited: wpłacony margin (do zrealizowanego PnL), Funding: suma
+-- zapłaconego (-) / otrzymanego (+) fundingu, FundingAt: ostatnia rozliczona godzina.
+export type PerpPosition = {
+	Symbol: string,
+	Side: PerpSide,
+	Size: number,
+	Entry: number,
+	Margin: number,
+	Deposited: number,
+	Funding: number,
+	OpenedAt: number,
+	FundingAt: number,
+	TP: number?,
+	SL: number?,
+}
+
+-- Zlecenie limit; Margin i prowizja są zarezerwowane z salda do wykonania albo anulowania.
+export type PerpOrder = {
+	Id: string,
+	Symbol: string,
+	Side: PerpSide,
+	Price: number,
+	Margin: number,
+	Leverage: number,
+	Reserved: number,
+	CreatedAt: number,
+	TP: number?,
+	SL: number?,
+}
+
+export type PerpAction = "Open" | "Close" | "Liquidation" | "TP" | "SL"
+
+export type PerpTrade = {
+	T: number,
+	Symbol: string,
+	Side: PerpSide,
+	Action: PerpAction,
+	Price: number,
+	Size: number,
+	Fee: number,
+	Pnl: number?,
+}
+
+export type PerpAccount = {
+	Positions: { [string]: PerpPosition },
+	Orders: { PerpOrder },
+	History: { PerpTrade },
+	-- Do kiedy rozliczono zlecenia, funding i likwidacje (także gdy gracz był offline).
+	CheckedAt: number,
+}
+
+export type PerpMarket = {
+	Symbol: string,
+	Mark: number,
+	Oracle: number,
+	-- Zmiana 24h w %.
+	Change: number,
+	Volume: number,
+	OpenInterest: number,
+	-- Stawka fundingu na najbliższą godzinę (ułamek, 0.0000125 = 0.00125%).
+	Funding: number,
+	NextFunding: number,
+}
+
+-- Transakcja gracza widoczna dla wszystkich (Trader: nazwa albo anonimowy alias).
+export type PerpPrint = { T: number, Symbol: string, Side: PerpSide, Price: number, Size: number, Trader: string }
+
+export type PerpsSnapshot = { T: number, Markets: { [string]: PerpMarket }, Prints: { PerpPrint } }
+
+export type PerpOrderRequest = {
+	Symbol: string,
+	Side: PerpSide,
+	Type: "Market" | "Limit",
+	Margin: number,
+	Leverage: number,
+	Price: number?,
+	TP: number?,
+	SL: number?,
+}
 
 export type InitialState = {
 	Market: MarketSnapshot,

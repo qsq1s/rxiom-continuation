@@ -10,6 +10,7 @@ local Coins = require(ReplicatedStorage.Shared.Coins)
 local Config = require(ReplicatedStorage.Shared.Config)
 local Signal = require(ReplicatedStorage.Shared.Signal)
 local Types = require(ReplicatedStorage.Shared.Types)
+local PerpEngine = require(script.Parent.PerpEngine)
 local Stats = require(script.Parent.Stats)
 
 export type Profile = {
@@ -25,6 +26,7 @@ export type Profile = {
 	Stats: Types.TradeStats,
 	-- ID ostatnio zaksięgowanych przelewów przychodzących (ochrona przed podwójnym zaksięgowaniem).
 	Received: { string },
+	Perps: Types.PerpAccount,
 }
 
 local WALLET_ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
@@ -75,6 +77,7 @@ local function defaultProfile(): Profile
 		Public = false,
 		Stats = Stats.empty(),
 		Received = {},
+		Perps = PerpEngine.empty(),
 	}
 end
 
@@ -117,6 +120,7 @@ local function sanitize(data: any): Profile
 		Public = data.Public == true,
 		Stats = Stats.empty(),
 		Received = {},
+		Perps = PerpEngine.empty(),
 	}
 	if typeof(data.Received) == "table" then
 		for _, id in data.Received do
@@ -194,6 +198,7 @@ local function sanitize(data: any): Profile
 		end
 	end
 	profile.Stats = Stats.sanitize(data.Stats, profile.Positions, profile.Orders)
+	profile.Perps = PerpEngine.sanitize(data.Perps, workspace:GetServerTimeNow())
 	return profile
 end
 
@@ -239,6 +244,7 @@ local function save(player: Player): boolean
 		Public = profile.Public,
 		Stats = profile.Stats,
 		Received = profile.Received,
+		Perps = profile.Perps,
 	}
 	local ok, err = pcall(store.UpdateAsync, store, key(player), function()
 		return payload

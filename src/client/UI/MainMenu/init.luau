@@ -20,6 +20,7 @@ local BottomBar = require(script.BottomBar)
 local CoinView = require(script.CoinView)
 local DiscoverPage = require(script.DiscoverPage)
 local PortfolioPage = require(script.PortfolioPage)
+local PerpsPage = require(script.PerpsPage)
 local PulsePage = require(script.PulsePage)
 local SendPanel = require(script.SendPanel)
 local TrackerPage = require(script.TrackerPage)
@@ -29,7 +30,7 @@ local create = Util.create
 
 local CONTENT_PADDING = 32
 
-type Page = { Name: "Discover" | "Pulse" | "Trackers" | "Coin" | "Portfolio", Ticker: string? }
+type Page = { Name: "Discover" | "Pulse" | "Trackers" | "Perpetuals" | "Coin" | "Portfolio", Ticker: string? }
 
 local MainMenu = {}
 
@@ -67,6 +68,8 @@ local function pagePath(page: Page): string
 		return "/pulse"
 	elseif page.Name == "Trackers" then
 		return "/trackers"
+	elseif page.Name == "Perpetuals" then
+		return "/perps"
 	end
 	return "/discover"
 end
@@ -132,6 +135,7 @@ function MainMenu.mount(): Handle
 	local portfolioPage: PortfolioPage.PortfolioPage
 	local pulsePage: PulsePage.PulsePage
 	local trackerPage: TrackerPage.TrackerPage
+	local perpsPage: PerpsPage.PerpsPage
 	local sendPanel: SendPanel.SendPanel
 
 	local function render(page: Page)
@@ -146,9 +150,15 @@ function MainMenu.mount(): Handle
 			pulsePage.Refresh()
 		elseif page.Name == "Trackers" then
 			trackerPage.Refresh()
+		elseif page.Name == "Perpetuals" then
+			perpsPage.Refresh()
 		end
 		local section = page.Name
-		topBar.SetActive(if section == "Portfolio" or section == "Pulse" or section == "Trackers" then section else "Discover")
+		topBar.SetActive(
+			if section == "Portfolio" or section == "Pulse" or section == "Trackers" or section == "Perpetuals"
+				then section
+				else "Discover"
+		)
 		if locked then
 			return
 		end
@@ -184,6 +194,9 @@ function MainMenu.mount(): Handle
 		end,
 		Trackers = function()
 			navigate({ Name = "Trackers" })
+		end,
+		Perpetuals = function()
+			navigate({ Name = "Perpetuals" })
 		end,
 		Portfolio = function()
 			navigate({ Name = "Portfolio" })
@@ -234,6 +247,10 @@ function MainMenu.mount(): Handle
 	trackerPage = TrackerPage.new(openCoin)
 	trackerPage.Frame.Parent = content
 	pages.Trackers = trackerPage.Frame
+
+	perpsPage = PerpsPage.new()
+	perpsPage.Frame.Parent = content
+	pages.Perpetuals = perpsPage.Frame
 
 	BottomBar.new().Frame.Parent = site
 	Toast.mount(site, BottomBar.Height + 16)

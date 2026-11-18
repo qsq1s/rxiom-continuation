@@ -41,6 +41,16 @@ local function trim(map: { [string]: number }, limit: number)
 	end
 end
 
+-- Transakcja perpetuals: wolumen to wartość pozycji w RXI, `realized` od razu trafia do PnL
+-- (prowizja przy otwarciu, wynik przy zamknięciu, utracony margin przy likwidacji).
+function Stats.recordPerp(stats: TradeStats, volume: number, realized: number)
+	if volume > 0 then
+		stats.Volume += volume
+		stats.Trades += 1
+	end
+	stats.Realized += realized
+end
+
 -- Zapisuje wykonaną transakcję gracza. `rx`: przy kupnie zapłacone RX (z prowizją), przy sprzedaży
 -- otrzymane RX (po prowizji).
 function Stats.record(stats: TradeStats, ticker: string, side: Types.Side, tokens: number, rx: number)
