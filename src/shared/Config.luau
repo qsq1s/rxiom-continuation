@@ -64,6 +64,19 @@ local Config = {
 		Colors = { "F5C542", "526FFF", "2FE3AC", "EC397A", "A855F7", "F7931A", "38BDF8", "84CC16" },
 	},
 
+	-- Boty-snajperzy: kupują nowy coin z Pulse w pierwszych sekundach i później sprzedają.
+	Snipers = {
+		-- Szansa, że coin w ogóle zostanie zesnajpowany, i ilu snajperów przyjdzie.
+		Chance = 0.85,
+		Min = 2,
+		Max = 5,
+		-- Pierwszy zakup po tylu sekundach od startu (dev buy zwykle zdąży pierwszy), kolejne co tyle.
+		FirstDelay = { 1.5, 4 },
+		Gap = { 0.2, 1.2 },
+		-- Wielkość zakupu jako ułamek RXI w puli.
+		Size = { 0.03, 0.08 },
+	},
+
 	SlippageOptions = { 5, 10, 20, 50 },
 	PriorityFeeOptions = { 0.0001, 0.001, 0.005 },
 	TipOptions = { 0, 0.001, 0.01 },

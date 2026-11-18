@@ -22,6 +22,7 @@ local Bots = require(script.Parent.Bots)
 local Market = require(script.Parent.Market)
 local OrderBook = require(script.Parent.OrderBook)
 local PlayerData = require(script.Parent.PlayerData)
+local Snipers = require(script.Parent.Snipers)
 
 type ActionResult = Types.ActionResult
 
@@ -499,6 +500,7 @@ local function createCoin(player: Player, request: any): ActionResult
 
 	known[ticker] = entry
 	activate(entry)
+	Snipers.onLaunch(ticker, player)
 	prune()
 	pushPortfolio(player)
 	notifyAll("Info", `{player.DisplayName} launched {ticker} on Pulse`, player)
@@ -509,6 +511,7 @@ end
 function Launchpad.start(push: (player: Player) -> ())
 	pushPortfolio = push
 	Remotes.CreateCoin.OnServerInvoke = createCoin
+	Snipers.start()
 	task.spawn(function()
 		while true do
 			task.wait(SAVE_SECONDS)

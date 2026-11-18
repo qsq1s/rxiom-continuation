@@ -430,6 +430,8 @@ function CoinView.new(onBack: () -> (), onAlerts: (ticker: string) -> ()): CoinV
 				cells[6].TextColor3 = if mine
 					then Colors.Text
 					elseif trade.IsPlayer then Color3.fromHex("BDBDBD")
+					-- Boty-snajperzy z Pulse wyróżnione, żeby było widać, kto zrzuca.
+					elseif not trade.IsPlayer and string.sub(trade.Trader, 1, 7) == "sniper_" then Colors.Yellow
 					else Colors.TextMuted
 			end
 		end
